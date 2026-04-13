@@ -434,7 +434,7 @@ const BABY=new Date('2020-07-18');
 // Cloudinary 配置（照片 + 日记数据共用同一个账号）
 const CLD_CLOUD='dnakz7jef';
 const CLD_PRESET='lovelove';
-const CLD_UPLOAD_URL=`https://api.cloudinary.com/v1_1/${CLD_CLOUD}/auto/upload`;
+const CLD_UPLOAD_URL=`https://api.cloudinary.com/v1_1/${CLD_CLOUD}/raw/upload`;
 const CLD_IMG_URL=`https://api.cloudinary.com/v1_1/${CLD_CLOUD}/image/upload`;
 const CLD_DATA_ID='couple_diary_data'; // 云端 JSON 文件固定 public_id
 
@@ -454,34 +454,62 @@ function p2(n){return String(n).padStart(2,'0')}
 function toDate(s){return new Date(s+'T00:00:00')}
 function toStr(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())}
 
-// ── 云端数据同步（Cloudinary Raw）──
+// ── 云端数据同步（JSONbin.io）──
+// JSONbin 是免费的 JSON 存储服务，无需配置，直接可用
+const JSONBIN_URL='https://api.jsonbin.io/v3/b';
+const JSONBIN_KEY='$2a$10$1DhZoNloCnVf/xnnq57qhunk1h1eh5rsWJ1arFu8wVXmGZeiDmJsa';
+const BIN_ID_KEY='couple_diary_bin_id'; // 本地存储 bin ID
+
+async function getBinId(){
+  return localStorage.getItem(BIN_ID_KEY)||null;
+}
+
 async function loadFromCloud(){
   try{
-    // 加时间戳防止缓存
-    const url=`https://res.cloudinary.com/${CLD_CLOUD}/raw/upload/${CLD_DATA_ID}?t=${Date.now()}`;
-    const res=await fetch(url);
-    if(!res.ok)return; // 首次使用，文件不存在
+    loadFromLocal(); // 先用本地缓存快速显示
+    const binId=await getBinId();
+    if(!binId)return; // 首次使用，还没有云端数据
+    const res=await fetch(`${JSONBIN_URL}/${binId}/latest`,{
+      headers:{'X-Master-Key':JSONBIN_KEY,'X-Bin-Meta':'false'}
+    });
+    if(!res.ok)return;
     const json=await res.json();
-    if(json&&typeof json==='object') S.data=json;
+    if(json&&typeof json==='object'){
+      S.data=json;
+      saveToLocal();
+    }
   }catch(e){
     console.warn('云端加载失败，使用本地缓存',e);
-    loadFromLocal();
   }
 }
 
 async function saveToCloud(){
   try{
-    const blob=new Blob([JSON.stringify(S.data)],{type:'application/json'});
-    const fd=new FormData();
-    fd.append('file',blob,'diary.json');
-    fd.append('upload_preset',CLD_PRESET);
-    fd.append('public_id',CLD_DATA_ID);
-    fd.append('overwrite','true');
-    fd.append('invalidate','true');
-    await fetch(CLD_UPLOAD_URL,{method:'POST',body:fd});
-    saveToLocal(); // 同时写本地缓存
+    let binId=await getBinId();
+    const payload=JSON.stringify(S.data);
+    if(!binId){
+      // 首次保存，创建新 bin
+      const res=await fetch(JSONBIN_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY,'X-Bin-Name':'couple-diary','X-Bin-Private':'true'},
+        body:payload
+      });
+      if(!res.ok)throw new Error('创建失败');
+      const json=await res.json();
+      binId=json.metadata.id;
+      localStorage.setItem(BIN_ID_KEY,binId);
+    } else {
+      // 更新已有 bin
+      const res=await fetch(`${JSONBIN_URL}/${binId}`,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+        body:payload
+      });
+      if(!res.ok)throw new Error('更新失败');
+    }
+    saveToLocal();
   }catch(e){
-    console.warn('云端保存失败，已写入本地缓存',e);
+    console.warn('云端保存失败',e);
     saveToLocal();
     showToast('网络异常，已暂存到本地',false);
   }
