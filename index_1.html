@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>我们的日程日记</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;background:#f7f6f3;color:#1a1a1a;min-height:100vh;-webkit-tap-highlight-color:transparent}
+.screen{display:none}.screen.on{display:block}
+
+/* LOGIN */
+#scr-login{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 1.5rem;background:#f7f6f3}
+#scr-login.on{display:flex}
+.login-logo{font-size:48px;color:#D4537E;margin-bottom:12px}
+.login-title{font-size:24px;font-weight:700;color:#1a1a1a;margin-bottom:6px}
+.login-sub{font-size:14px;color:#aaa;margin-bottom:2.5rem}
+.role-pick{display:flex;gap:14px;width:100%;max-width:360px;margin-bottom:1.75rem}
+.role-card{flex:1;border:2px solid #e8e5df;border-radius:18px;padding:1.5rem .5rem;text-align:center;cursor:pointer;background:#fff;transition:all .18s;user-select:none}
+.role-card:active{transform:scale(.96)}
+.role-card.sel-f{border-color:#D4537E;background:#FBEAF0}
+.role-card.sel-m{border-color:#378ADD;background:#E6F1FB}
+.role-symbol{font-size:34px;margin-bottom:10px}
+.role-name{font-size:15px;font-weight:600;color:#1a1a1a}
+.role-id{font-size:13px;color:#aaa;margin-top:4px;letter-spacing:2px}
+.verify-box{width:100%;max-width:360px;background:#fff;border:1px solid #e8e5df;border-radius:18px;padding:1.25rem;margin-bottom:1.25rem}
+.verify-label{font-size:13px;color:#aaa;margin-bottom:10px}
+.code-input{width:100%;border:1.5px solid #e8e5df;border-radius:10px;padding:13px 16px;font-size:22px;letter-spacing:8px;color:#1a1a1a;background:#f7f6f3;outline:none;text-align:center;font-family:'Courier New',monospace;transition:border-color .15s}
+.code-input:focus{border-color:#D4537E;background:#fff}
+.verify-err{font-size:13px;color:#c0392b;margin-top:8px;text-align:center;display:none}
+.login-btn{width:100%;max-width:360px;padding:15px;border-radius:14px;border:none;font-size:16px;font-weight:700;cursor:pointer;color:#fff;background:#ccc;transition:opacity .15s,background .2s}
+.login-btn.f{background:#D4537E}.login-btn.m{background:#378ADD}
+.login-btn:active{opacity:.82}
+
+/* APP SHELL */
+#scr-app{max-width:480px;margin:0 auto;padding-bottom:72px}
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;background:#fff;border-bottom:1px solid #ede9e0;position:sticky;top:0;z-index:20}
+.header-left{display:flex;align-items:center;gap:10px}
+.cur-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.av-f{background:#F4C0D1;color:#72243E}.av-m{background:#B5D4F4;color:#0C447C}
+.cur-name{font-size:15px;font-weight:700;color:#1a1a1a}
+.cur-sub{font-size:12px;color:#aaa;margin-top:1px}
+.logout-btn{font-size:13px;color:#aaa;cursor:pointer;border:1px solid #e0ddd5;border-radius:8px;padding:5px 12px;background:none}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid #ede9e0;display:flex;z-index:20}
+.nav-btn{flex:1;padding:10px 0 8px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:#ccc;transition:color .15s}
+.nav-btn.on-f{color:#D4537E}.nav-btn.on-m{color:#378ADD}
+.nav-icon{font-size:20px;line-height:1}.nav-label{font-size:11px;font-weight:500}
+
+/* PAGES */
+.page{display:none}.page.on{display:block}
+
+/* DATE BAR */
+.date-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#fff;margin-bottom:1px}
+.date-arrow{width:36px;height:36px;border-radius:50%;border:1px solid #e0ddd5;background:none;cursor:pointer;font-size:20px;color:#555;display:flex;align-items:center;justify-content:center}
+.date-arrow:active{background:#f0ede5}
+.date-center{text-align:center}
+.date-main{font-size:17px;font-weight:700;color:#1a1a1a}
+.date-wd{font-size:12px;color:#aaa;margin-top:2px}
+
+/* SUB TABS */
+.sub-tabs{display:flex;background:#fff;border-bottom:1px solid #ede9e0}
+.sub-tab{flex:1;padding:11px 0;font-size:14px;border:none;background:none;cursor:pointer;color:#bbb;border-bottom:2.5px solid transparent}
+.sub-tab.on-f{color:#D4537E;border-bottom-color:#D4537E;font-weight:600}
+.sub-tab.on-m{color:#378ADD;border-bottom-color:#378ADD;font-weight:600}
+.sec{display:none;padding:16px 18px}.sec.on{display:block}
+
+/* FORM */
+.card{background:#fff;border-radius:16px;border:1px solid #ede9e0;padding:16px;margin-bottom:14px}
+.card-title{font-size:13px;color:#aaa;margin-bottom:12px;font-weight:500}
+.form-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.form-label{font-size:13px;color:#aaa;width:30px;flex-shrink:0}
+.fi{flex:1;border:1.5px solid #e8e5df;border-radius:10px;padding:9px 12px;font-size:14px;color:#1a1a1a;background:#f7f6f3;outline:none;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;transition:border-color .15s}
+.fi:focus{border-color:#D4537E;background:#fff}
+textarea.fi{resize:none}
+.cat-wrap{margin-bottom:12px}
+.cat-label{font-size:12px;color:#bbb;margin-bottom:7px}
+.cat-row{display:flex;gap:7px;flex-wrap:wrap}
+.cat-btn{padding:5px 12px;border-radius:20px;border:1px solid #e8e5df;background:#f7f6f3;font-size:12px;cursor:pointer;color:#777}
+.cat-btn:active{transform:scale(.95)}
+.cat-btn.sel-f{background:#FBEAF0;border-color:#F4C0D1;color:#72243E;font-weight:600}
+.cat-btn.sel-m{background:#E6F1FB;border-color:#B5D4F4;color:#0C447C;font-weight:600}
+.together-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.together-row input{width:16px;height:16px;accent-color:#639922;cursor:pointer}
+.together-row label{font-size:13px;color:#777;cursor:pointer}
+
+/* PHOTO IN FORM */
+.form-photo-row{margin-bottom:14px}
+.form-photo-label{font-size:12px;color:#bbb;margin-bottom:7px}
+.form-photo-area{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.photo-add-btn{width:56px;height:56px;border-radius:10px;border:1.5px dashed #d0cdc7;background:#fafaf8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;color:#ccc;flex-shrink:0;position:relative}
+.photo-add-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-add-btn:active{border-color:#D4537E;background:#FBEAF0}
+.form-thumb-wrap{position:relative;width:56px;height:56px;flex-shrink:0}
+.form-thumb{width:100%;height:100%;object-fit:cover;border-radius:10px;display:block;cursor:pointer}
+.form-thumb-del{position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);border:none;cursor:pointer;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;line-height:1}
+.form-thumb-del:active{background:rgba(192,57,43,.9)}
+
+.add-btn{width:100%;padding:12px;border-radius:12px;border:none;color:#fff;font-size:15px;font-weight:700;cursor:pointer}
+.add-btn:active{opacity:.82}
+.add-btn-f{background:#D4537E}.add-btn-m{background:#378ADD}
+.save-btn{margin-top:10px;padding:7px 18px;border-radius:8px;border:1px solid #ddd;background:transparent;font-size:13px;cursor:pointer;color:#888}
+.save-btn:active{background:#f0ede5}
+
+/* TIMELINE */
+.legend{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.lg{display:flex;align-items:center;gap:5px;font-size:12px;color:#999}
+.lg-dot{width:10px;height:10px;border-radius:3px}
+.tl{position:relative;padding-left:48px}
+.tl-line{position:absolute;left:22px;top:0;bottom:0;width:1.5px;background:#ede9e0}
+.tl-slot{min-height:44px;border-top:1px solid #f0ede5;padding:6px 0 4px;position:relative}
+.tl-hl{position:absolute;left:-48px;width:40px;text-align:right;font-size:11px;color:#ccc;top:8px}
+.ev-list{display:flex;flex-direction:column;gap:8px}
+.ev{padding:10px 34px 10px 12px;position:relative;border-left:3px solid transparent;border-radius:0 8px 8px 0}
+.ev-f{background:#FBEAF0;border-left-color:#D4537E}
+.ev-m{background:#E6F1FB;border-left-color:#378ADD}
+.ev-both{background:#EAF3DE;border-left-color:#639922}
+.ev-head{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap}
+.ev-time{font-size:11px;color:#999}
+.badge{font-size:11px;padding:2px 7px;border-radius:10px}
+.badge-f{background:#F4C0D1;color:#72243E}
+.badge-m{background:#B5D4F4;color:#0C447C}
+.badge-both{background:#C0DD97;color:#27500A}
+.badge-cat{background:#f0ede5;color:#888}
+.ev-title{font-size:14px;font-weight:600;color:#1a1a1a}
+.ev-note{font-size:12px;color:#999;margin-top:3px;line-height:1.5}
+.ev-del{position:absolute;right:8px;top:8px;background:none;border:none;cursor:pointer;font-size:18px;color:#ccc;padding:0 2px;line-height:1}
+.ev-del:active{color:#c0392b}
+.ev-lock{position:absolute;right:10px;top:10px;font-size:12px;color:#ccc}
+
+/* EVENT PHOTOS in timeline */
+.ev-photos{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.ev-photo-thumb{width:60px;height:60px;object-fit:cover;border-radius:7px;cursor:pointer;display:block;flex-shrink:0}
+
+.empty-tl{text-align:center;padding:3rem 0;font-size:14px;color:#ccc}
+.note-view{background:#fff;border-radius:16px;border:1px solid #ede9e0;padding:14px 16px;margin-top:16px}
+.note-view-label{font-size:12px;color:#bbb;margin-bottom:6px}
+.note-view-text{font-size:14px;color:#555;line-height:1.75}
+
+/* LIGHTBOX */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:999;align-items:center;justify-content:center}
+.lightbox.on{display:flex}
+.lightbox img{max-width:96vw;max-height:90vh;object-fit:contain;border-radius:4px}
+.lightbox-close{position:absolute;top:16px;right:18px;font-size:28px;color:#fff;cursor:pointer;line-height:1;background:none;border:none}
+.lightbox-prev,.lightbox-next{position:absolute;top:50%;transform:translateY(-50%);font-size:28px;color:rgba(255,255,255,.7);cursor:pointer;background:none;border:none;padding:0 12px}
+.lightbox-prev{left:0}.lightbox-next{right:0}
+
+/* CALENDAR */
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#fff;margin-bottom:1px}
+.cal-month{font-size:18px;font-weight:700;color:#1a1a1a}
+.cal-nav{display:flex;gap:8px}
+.cal-nav button{width:34px;height:34px;border-radius:50%;border:1px solid #e0ddd5;background:none;cursor:pointer;font-size:18px;color:#555;display:flex;align-items:center;justify-content:center}
+.cal-nav button:active{background:#f0ede5}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);background:#fff;padding:6px 10px 4px;border-bottom:1px solid #f0ede5}
+.cal-wd{text-align:center;font-size:12px;color:#bbb;font-weight:500;padding:4px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);background:#fff;padding:4px 10px 10px;gap:2px;margin-bottom:1px}
+.cal-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:5px;cursor:pointer;border-radius:10px;position:relative;transition:background .12s}
+.cal-cell:active{background:#f0ede5}
+.cal-cell.other-month .cal-num{color:#ddd}
+.cal-num{font-size:14px;color:#1a1a1a;font-weight:500;line-height:24px}
+.cal-cell.is-today .cal-num{background:#1a1a1a;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px}
+.cal-cell.is-sel-f{background:#FBEAF0}.cal-cell.is-sel-m{background:#E6F1FB}
+.cal-cell.is-sel-f .cal-num{color:#D4537E;font-weight:700}
+.cal-cell.is-sel-m .cal-num{color:#378ADD;font-weight:700}
+.cal-dots{display:flex;gap:2px;margin-top:1px}
+.cal-dot{width:4px;height:4px;border-radius:50%}
+.cal-photo-dot{width:5px;height:5px;border-radius:50%;background:#EF9F27}
+.day-preview{background:#fff;padding:16px 18px;border-top:1px solid #f0ede5}
+.day-preview-title{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.go-day-btn{font-size:12px;cursor:pointer;border:1px solid #F4C0D1;border-radius:6px;padding:3px 10px;background:none;color:#D4537E}
+.preview-list{display:flex;flex-direction:column;gap:8px}
+.preview-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px}
+.pi-f{background:#FBEAF0}.pi-m{background:#E6F1FB}.pi-both{background:#EAF3DE}
+.pi-bar{width:3px;border-radius:2px;flex-shrink:0;align-self:stretch;min-height:20px}
+.pi-bar-f{background:#D4537E}.pi-bar-m{background:#378ADD}.pi-bar-both{background:#639922}
+.pi-body{flex:1;min-width:0}
+.pi-time{font-size:11px;color:#aaa;margin-bottom:2px}
+.pi-title{font-size:14px;font-weight:600;color:#1a1a1a}
+.pi-note{font-size:12px;color:#999;margin-top:2px}
+.pi-photos{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.pi-photo{width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer}
+.preview-empty{font-size:14px;color:#ccc;text-align:center;padding:1.5rem 0}
+
+/* REVIEW */
+.review-top{background:#fff;padding:16px 18px 12px;border-bottom:1px solid #ede9e0;margin-bottom:1px}
+.review-top-title{font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:4px}
+.review-top-sub{font-size:13px;color:#aaa}
+.together-card{margin:14px 18px;background:#FBEAF0;border-radius:16px;border:1px solid #F4C0D1;padding:16px 20px;display:flex;align-items:center;gap:16px}
+.tc-num{font-size:42px;font-weight:700;color:#D4537E;min-width:72px;text-align:center}
+.tc-label{font-size:15px;font-weight:600;color:#99355A}
+.tc-sub{font-size:12px;color:#C06E8A;margin-top:4px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 18px 14px}
+.stat-card{background:#fff;border-radius:14px;padding:14px 10px;text-align:center;border:1px solid #ede9e0}
+.stat-num{font-size:26px;font-weight:700;color:#1a1a1a}
+.stat-label{font-size:11px;color:#aaa;margin-top:4px}
+.sec-title{font-size:14px;font-weight:600;color:#1a1a1a;padding:0 18px 10px}
+.cat-pills{padding:0 18px 16px;display:flex;gap:8px;flex-wrap:wrap}
+.cat-pill{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #ede9e0;border-radius:20px;padding:6px 12px 6px 8px}
+.cp-dot{width:8px;height:8px;border-radius:50%}
+.cp-name{font-size:13px;color:#555}
+.cp-cnt{font-size:12px;color:#aaa;margin-left:2px}
+.recent-list{padding:0 18px;display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.re-card{background:#fff;border-radius:14px;border:1px solid #ede9e0;overflow:hidden}
+.re-top{padding:9px 14px;font-size:12px;color:#fff;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.re-top-f{background:#D4537E}.re-top-m{background:#378ADD}.re-top-mix{background:#639922}
+.re-body{padding:10px 14px;display:flex;flex-direction:column;gap:7px}
+.re-item{display:flex;align-items:center;gap:8px}
+.re-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.re-dot-f{background:#D4537E}.re-dot-m{background:#378ADD}.re-dot-both{background:#639922}
+.re-item-text{font-size:13px;color:#333;flex:1}
+.re-item-time{font-size:11px;color:#ccc}
+.re-item-cam{font-size:11px;color:#EF9F27;margin-left:2px}
+.re-note{font-size:12px;color:#999;padding:8px 14px 10px;border-top:1px solid #f5f3ef;line-height:1.6;font-style:italic}
+.re-photos{padding:0 14px 12px;display:flex;gap:5px;flex-wrap:wrap}
+.re-photo{width:56px;height:56px;object-fit:cover;border-radius:7px;cursor:pointer}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);padding:9px 22px;border-radius:24px;font-size:14px;color:#fff;z-index:200;pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- 灯箱 -->
+<div class="lightbox" id="lightbox" onclick="lbBg(event)">
+  <button class="lightbox-close" onclick="closeLB()">✕</button>
+  <button class="lightbox-prev" onclick="lbNav(-1,event)">‹</button>
+  <img id="lbImg" src="" alt="">
+  <button class="lightbox-next" onclick="lbNav(1,event)">›</button>
+</div>
+
+<!-- ════ 登录 ════ -->
+<div id="scr-login" class="screen on">
+  <div class="login-logo">♡</div>
+  <div class="login-title">我们的日程日记</div>
+  <div class="login-sub">只属于两个人的私密空间</div>
+  <div class="role-pick">
+    <div class="role-card" id="card-f" onclick="pickRole('f')">
+      <div class="role-symbol">♀</div>
+      <div class="role-name">我是女生</div>
+      <div class="role-id">ZRL</div>
+    </div>
+    <div class="role-card" id="card-m" onclick="pickRole('m')">
+      <div class="role-symbol">♂</div>
+      <div class="role-name">我是男生</div>
+      <div class="role-id">GYL</div>
+    </div>
+  </div>
+  <div class="verify-box">
+    <div class="verify-label" id="vLabel">选择身份后输入验证码</div>
+    <input class="code-input" id="codeInput" type="password"
+      placeholder="· · · · · · · ·" maxlength="8"
+      oninput="clearErr()" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="verify-err" id="verifyErr">验证码不正确，请重新输入</div>
+  </div>
+  <button class="login-btn" id="loginBtn" onclick="doLogin()">进入日记本</button>
+</div>
+
+<!-- ════ 主应用 ════ -->
+<div id="scr-app" class="screen">
+  <div class="app-header">
+    <div class="header-left">
+      <div class="cur-av" id="curAv"></div>
+      <div>
+        <div class="cur-name" id="curName"></div>
+        <div class="cur-sub" id="curSub"></div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">退出</button>
+  </div>
+
+  <!-- 今天 -->
+  <div class="page on" id="page-today">
+    <div class="date-bar">
+      <button class="date-arrow" onclick="shiftDay(-1)">‹</button>
+      <div class="date-center">
+        <div class="date-main" id="dateMain"></div>
+        <div class="date-wd" id="dateWd"></div>
+      </div>
+      <button class="date-arrow" onclick="shiftDay(1)">›</button>
+    </div>
+    <div class="sub-tabs">
+      <button class="sub-tab" id="stab-write" onclick="showSec('write')">写日程</button>
+      <button class="sub-tab" id="stab-tl" onclick="showSec('tl')">时间轴</button>
+    </div>
+
+    <!-- 写日程 -->
+    <div class="sec" id="sec-write">
+      <div class="card">
+        <div class="card-title">添加日程</div>
+        <div class="form-row">
+          <span class="form-label">时间</span>
+          <input type="time" id="timeS" value="09:00" class="fi">
+        </div>
+        <div class="form-row">
+          <span class="form-label">事项</span>
+          <input type="text" id="evtT" placeholder="做了什么…" class="fi">
+        </div>
+        <div class="form-row">
+          <span class="form-label">备注</span>
+          <input type="text" id="evtN" placeholder="心情或补充…" class="fi">
+        </div>
+        <div class="cat-wrap">
+          <div class="cat-label">分类</div>
+          <div class="cat-row" id="catRow"></div>
+        </div>
+        <div class="together-row">
+          <input type="checkbox" id="chkTog">
+          <label for="chkTog">两人共同完成</label>
+        </div>
+        <!-- 照片区 -->
+        <div class="form-photo-row">
+          <div class="form-photo-label">附上照片（可选）</div>
+          <div class="form-photo-area" id="formPhotoArea">
+            <div class="photo-add-btn" id="photoAddBtn">
+              <input type="file" accept="image/*" multiple id="photoInput" onchange="handleFormPhotos(event)">
+              <span>+</span>
+            </div>
+          </div>
+        </div>
+        <button class="add-btn" id="addBtn" onclick="addEvent()">添加到今日日程</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">今日小结</div>
+        <textarea id="dayNote" class="fi" rows="3"
+          placeholder="今天有什么想记下来的…" style="width:100%"></textarea>
+        <button class="save-btn" onclick="saveNote()">保存小结</button>
+      </div>
+    </div>
+
+    <!-- 时间轴 -->
+    <div class="sec" id="sec-tl">
+      <div class="legend">
+        <div class="lg"><div class="lg-dot" style="background:#D4537E"></div>ZRL（她）</div>
+        <div class="lg"><div class="lg-dot" style="background:#378ADD"></div>GYL（他）</div>
+        <div class="lg"><div class="lg-dot" style="background:#639922"></div>两人同行</div>
+      </div>
+      <div class="tl" id="timeline"></div>
+      <div id="noteView"></div>
+    </div>
+  </div>
+
+  <!-- 日历 -->
+  <div class="page" id="page-cal">
+    <div class="cal-header">
+      <div class="cal-month" id="calMonth"></div>
+      <div class="cal-nav">
+        <button onclick="shiftMonth(-1)">‹</button>
+        <button onclick="shiftMonth(1)">›</button>
+      </div>
+    </div>
+    <div class="cal-weekdays">
+      <div class="cal-wd">日</div><div class="cal-wd">一</div>
+      <div class="cal-wd">二</div><div class="cal-wd">三</div>
+      <div class="cal-wd">四</div><div class="cal-wd">五</div>
+      <div class="cal-wd">六</div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="day-preview">
+      <div class="day-preview-title">
+        <span id="previewTitle">请选择一天</span>
+        <button class="go-day-btn" onclick="goToDay()">去记录这天</button>
+      </div>
+      <div id="previewList"></div>
+    </div>
+  </div>
+
+  <!-- 回顾 -->
+  <div class="page" id="page-review">
+    <div class="review-top">
+      <div class="review-top-title">我们的故事</div>
+      <div class="review-top-sub" id="reviewSub"></div>
+    </div>
+    <div class="together-card">
+      <div class="tc-num" id="tcNum">—</div>
+      <div>
+        <div class="tc-label">在一起的天数</div>
+        <div class="tc-sub" id="tcSub"></div>
+      </div>
+    </div>
+    <div style="margin:0 18px 14px;display:flex;flex-direction:column;gap:8px">
+      <div style="background:#E6F1FB;border-radius:14px;border:1px solid #B5D4F4;padding:13px 16px;display:flex;align-items:center;gap:14px">
+        <div style="font-size:28px;font-weight:700;color:#378ADD;min-width:60px;text-align:center" id="marryDays">—</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#185FA5">领证纪念日</div>
+          <div style="font-size:12px;color:#378ADD;margin-top:3px">2020年3月27日</div>
+        </div>
+      </div>
+      <div style="background:#EAF3DE;border-radius:14px;border:1px solid #C0DD97;padding:13px 16px;display:flex;align-items:center;gap:14px">
+        <div style="font-size:28px;font-weight:700;color:#3B6D11;min-width:60px;text-align:center" id="babyDays">—</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#3B6D11">宝宝出生</div>
+          <div style="font-size:12px;color:#639922;margin-top:3px">2020年7月18日</div>
+        </div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">总记录数</div></div>
+      <div class="stat-card"><div class="stat-num" id="statF">0</div><div class="stat-label">ZRL 写的</div></div>
+      <div class="stat-card"><div class="stat-num" id="statM">0</div><div class="stat-label">GYL 写的</div></div>
+    </div>
+    <div class="sec-title">活动分布</div>
+    <div class="cat-pills" id="catPills"></div>
+    <div class="sec-title">最近日记</div>
+    <div class="recent-list" id="recentList"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn" id="nav-today" onclick="showPage('today')">
+      <span class="nav-icon">✎</span><span class="nav-label">今天</span>
+    </button>
+    <button class="nav-btn" id="nav-cal" onclick="showPage('cal')">
+      <span class="nav-icon">◫</span><span class="nav-label">日历</span>
+    </button>
+    <button class="nav-btn" id="nav-review" onclick="showPage('review')">
+      <span class="nav-icon">♡</span><span class="nav-label">回顾</span>
+    </button>
+  </div>
+</div>
+
+<script>
+const CATS=['工作','用餐','运动','约会','家务','休闲','Love','其他'];
+const CAT_COLORS={'工作':'#378ADD','用餐':'#D4537E','运动':'#639922','约会':'#9B59B6','家务':'#E67E22','休闲':'#1D9E75','Love':'#E24B4A','其他':'#888'};
+const CREDS={f:'19930131',m:'19920401'};
+const NAMES={f:'ZRL',m:'GYL'};
+const WDS=['日','一','二','三','四','五','六'];
+const ANNIV=new Date('2019-04-17');
+const MARRY=new Date('2020-03-27');
+const BABY=new Date('2020-07-18');
+
+// Cloudinary 配置（照片 + 日记数据共用同一个账号）
+const CLD_CLOUD='dnakz7jef';
+const CLD_PRESET='lovelove';
+const CLD_UPLOAD_URL=`https://api.cloudinary.com/v1_1/${CLD_CLOUD}/auto/upload`;
+const CLD_IMG_URL=`https://api.cloudinary.com/v1_1/${CLD_CLOUD}/image/upload`;
+const CLD_DATA_ID='couple_diary_data'; // 云端 JSON 文件固定 public_id
+
+let S={
+  role:null,user:null,selCat:'其他',
+  curDate:todayStr(),
+  calY:new Date().getFullYear(),calM:new Date().getMonth(),
+  calSel:todayStr(),
+  data:{},
+};
+let pendingPhotos={};
+let LB={urls:[],idx:0};
+
+// ── 工具 ──
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())}
+function p2(n){return String(n).padStart(2,'0')}
+function toDate(s){return new Date(s+'T00:00:00')}
+function toStr(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())}
+
+// ── 云端数据同步（Cloudinary Raw）──
+async function loadFromCloud(){
+  try{
+    // 加时间戳防止缓存
+    const url=`https://res.cloudinary.com/${CLD_CLOUD}/raw/upload/${CLD_DATA_ID}?t=${Date.now()}`;
+    const res=await fetch(url);
+    if(!res.ok)return; // 首次使用，文件不存在
+    const json=await res.json();
+    if(json&&typeof json==='object') S.data=json;
+  }catch(e){
+    console.warn('云端加载失败，使用本地缓存',e);
+    loadFromLocal();
+  }
+}
+
+async function saveToCloud(){
+  try{
+    const blob=new Blob([JSON.stringify(S.data)],{type:'application/json'});
+    const fd=new FormData();
+    fd.append('file',blob,'diary.json');
+    fd.append('upload_preset',CLD_PRESET);
+    fd.append('public_id',CLD_DATA_ID);
+    fd.append('overwrite','true');
+    fd.append('invalidate','true');
+    await fetch(CLD_UPLOAD_URL,{method:'POST',body:fd});
+    saveToLocal(); // 同时写本地缓存
+  }catch(e){
+    console.warn('云端保存失败，已写入本地缓存',e);
+    saveToLocal();
+    showToast('网络异常，已暂存到本地',false);
+  }
+}
+
+// ── 本地缓存（localStorage 兜底）──
+function saveToLocal(){
+  try{localStorage.setItem('couple_diary_data',JSON.stringify(S.data));}catch(e){}
+}
+function loadFromLocal(){
+  try{
+    const raw=localStorage.getItem('couple_diary_data');
+    if(raw) S.data=JSON.parse(raw);
+  }catch(e){}
+}
+
+async function saveDay(date){
+  if(S.data[date]){
+    saveToLocal();
+    await saveToCloud();
+  }
+}
+
+// ── 照片：表单预上传 ──
+function handleFormPhotos(evt){
+  const files=Array.from(evt.target.files);
+  if(!files.length)return;
+  files.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const id='ph_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+      pendingPhotos[id]=e.target.result;
+      renderFormPhotos();
+    };
+    reader.readAsDataURL(file);
+  });
+  evt.target.value='';
+}
+function removePendingPhoto(id){
+  delete pendingPhotos[id];
+  renderFormPhotos();
+}
+function renderFormPhotos(){
+  const area=document.getElementById('formPhotoArea');
+  const thumbs=Object.entries(pendingPhotos).map(([id,url])=>
+    `<div class="form-thumb-wrap">
+      <img class="form-thumb" src="${url}" onclick="openLBurls([${JSON.stringify(url)}],0)">
+      <button class="form-thumb-del" onclick="removePendingPhoto('${id}')">✕</button>
+    </div>`
+  ).join('');
+  area.innerHTML=thumbs+`<div class="photo-add-btn" id="photoAddBtn">
+    <input type="file" accept="image/*" multiple id="photoInput" onchange="handleFormPhotos(event)">
+    <span>+</span>
+  </div>`;
+}
+
+// pendingPhotos: {tempId: {dataUrl, file}} — 表单里待上传的本地预览
+async function uploadToCloudinary(file){
+  const fd=new FormData();
+  fd.append('file',file);
+  fd.append('upload_preset',CLD_PRESET);
+  const res=await fetch(CLD_IMG_URL,{method:'POST',body:fd});
+  if(!res.ok)throw new Error('上传失败');
+  const json=await res.json();
+  // 返回 {publicId, url}
+  return {publicId:json.public_id, url:json.secure_url};
+}
+
+function cldThumbUrl(publicId,w=120){
+  return `https://res.cloudinary.com/${CLD_CLOUD}/image/upload/w_${w},h_${w},c_fill,q_auto,f_auto/${publicId}`;
+}
+function cldFullUrl(publicId){
+  return `https://res.cloudinary.com/${CLD_CLOUD}/image/upload/q_auto,f_auto/${publicId}`;
+}
+
+// ── 表单照片（本地预览，添加时再上传）──
+function handleFormPhotos(evt){
+  const files=Array.from(evt.target.files);
+  if(!files.length)return;
+  files.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const tempId='tmp_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+      pendingPhotos[tempId]={dataUrl:e.target.result,file};
+      renderFormPhotos();
+    };
+    reader.readAsDataURL(file);
+  });
+  evt.target.value='';
+}
+function removePendingPhoto(id){
+  delete pendingPhotos[id];
+  renderFormPhotos();
+}
+function renderFormPhotos(){
+  const area=document.getElementById('formPhotoArea');
+  const thumbs=Object.entries(pendingPhotos).map(([id,{dataUrl}])=>
+    `<div class="form-thumb-wrap">
+      <img class="form-thumb" src="${dataUrl}">
+      <button class="form-thumb-del" onclick="removePendingPhoto('${id}')">✕</button>
+    </div>`
+  ).join('');
+  area.innerHTML=thumbs+`<div class="photo-add-btn">
+    <input type="file" accept="image/*" multiple id="photoInput" onchange="handleFormPhotos(event)">
+    <span>+</span>
+  </div>`;
+}
+
+// ── 上传并返回 publicId 列表 ──
+async function uploadPendingPhotos(){
+  const entries=Object.values(pendingPhotos);
+  if(!entries.length)return[];
+  showToast(`上传照片中 (0/${entries.length})…`,true);
+  const results=[];
+  for(let i=0;i<entries.length;i++){
+    try{
+      const{publicId}=await uploadToCloudinary(entries[i].file);
+      results.push(publicId);
+      showToast(`上传照片中 (${i+1}/${entries.length})…`,true);
+    }catch(err){
+      showToast('某张照片上传失败，已跳过',false);
+    }
+  }
+  return results;
+}
+
+// ── 读取事件照片 URL（直接从 Cloudinary CDN 拼接）──
+function getEventPhotoUrls(photoIds){
+  if(!photoIds||!photoIds.length)return[];
+  return photoIds.map(id=>cldFullUrl(id));
+}
+function getEventPhotoThumbUrls(photoIds){
+  if(!photoIds||!photoIds.length)return[];
+  return photoIds.map(id=>cldThumbUrl(id));
+}
+
+// Cloudinary 不需要本地删除（照片留在云端，仅移除引用）
+async function deleteEventPhotos(){}
+
+// IDB 只存日记数据，不再存照片
+async function savePhotos(){}
+
+
+// ── 灯箱 ──
+function openLBurls(urls,idx){LB={urls,idx};showLB();}
+function showLB(){if(!LB.urls.length)return;document.getElementById('lbImg').src=LB.urls[LB.idx];document.getElementById('lightbox').classList.add('on');}
+function closeLB(){document.getElementById('lightbox').classList.remove('on');document.getElementById('lbImg').src='';}
+function lbBg(e){if(e.target===document.getElementById('lightbox'))closeLB();}
+function lbNav(dir,e){e.stopPropagation();LB.idx=(LB.idx+dir+LB.urls.length)%LB.urls.length;document.getElementById('lbImg').src=LB.urls[LB.idx];}
+
+// ── 登录 ──
+function pickRole(r){
+  S.role=r;
+  document.getElementById('card-f').className='role-card'+(r==='f'?' sel-f':'');
+  document.getElementById('card-m').className='role-card'+(r==='m'?' sel-m':'');
+  document.getElementById('vLabel').textContent=NAMES[r]+'，请输入你的验证码';
+  document.getElementById('loginBtn').className='login-btn '+r;
+  document.getElementById('codeInput').value='';
+  document.getElementById('verifyErr').style.display='none';
+  document.getElementById('codeInput').focus();
+}
+function clearErr(){document.getElementById('verifyErr').style.display='none';}
+async function doLogin(){
+  if(!S.role){showToast('请先选择身份',false);return;}
+  const v=document.getElementById('codeInput').value.trim();
+  if(v===CREDS[S.role]){
+    S.user=S.role;
+    document.getElementById('scr-login').classList.remove('on');
+    document.getElementById('scr-app').classList.add('on');
+    showToast('数据同步中…',true);
+    await loadFromCloud();
+    applyTheme();
+    showPage('today');
+    showToast('欢迎回来 ♡',true);
+  }else{
+    document.getElementById('verifyErr').style.display='block';
+    document.getElementById('codeInput').value='';
+    document.getElementById('codeInput').focus();
+  }
+}
+function doLogout(){
+  S.role=null;S.user=null;
+  document.getElementById('scr-app').classList.remove('on');
+  document.getElementById('scr-login').classList.add('on');
+  ['card-f','card-m'].forEach(id=>document.getElementById(id).className='role-card');
+  document.getElementById('vLabel').textContent='选择身份后输入验证码';
+  document.getElementById('codeInput').value='';
+  document.getElementById('loginBtn').className='login-btn';
+  document.getElementById('verifyErr').style.display='none';
+}
+
+// ── 主题 ──
+function applyTheme(){
+  const isF=S.user==='f';
+  const av=document.getElementById('curAv');
+  av.className='cur-av '+(isF?'av-f':'av-m');
+  av.textContent=isF?'她':'他';
+  document.getElementById('curName').textContent=NAMES[S.user];
+  document.getElementById('curSub').textContent=isF?'女生 · ZRL':'男生 · GYL';
+  document.getElementById('addBtn').className='add-btn add-btn-'+S.user;
+  renderCats();updateDateBar();
+}
+
+// ── 页面导航 ──
+function showPage(p){
+  ['today','cal','review'].forEach(x=>{
+    document.getElementById('page-'+x).classList.toggle('on',x===p);
+    document.getElementById('nav-'+x).className='nav-btn'+(x===p?' on-'+S.user:'');
+  });
+  if(p==='today'){showSec('write');updateDateBar();}
+  if(p==='cal'){S.calY=new Date().getFullYear();S.calM=new Date().getMonth();renderCal();}
+  if(p==='review')renderReview();
+}
+function showSec(s){
+  ['write','tl'].forEach(x=>{
+    document.getElementById('sec-'+x).classList.toggle('on',x===s);
+    document.getElementById('stab-'+x).className='sub-tab'+(x===s?' on-'+S.user:'');
+  });
+  if(s==='tl')renderTL();
+  if(s==='write'){loadNote();pendingPhotos={};renderFormPhotos();}
+}
+function shiftDay(n){
+  const d=toDate(S.curDate);d.setDate(d.getDate()+n);
+  S.curDate=toStr(d);
+  updateDateBar();loadNote();
+  if(document.getElementById('sec-tl').classList.contains('on'))renderTL();
+  if(document.getElementById('sec-write').classList.contains('on')){pendingPhotos={};renderFormPhotos();}
+}
+function updateDateBar(){
+  const[y,m,d]=S.curDate.split('-');
+  document.getElementById('dateMain').textContent=y+'年'+m+'月'+d+'日';
+  document.getElementById('dateWd').textContent='星期'+WDS[toDate(S.curDate).getDay()];
+}
+
+// ── 分类 ──
+function renderCats(){
+  document.getElementById('catRow').innerHTML=CATS.map(c=>
+    `<button class="cat-btn${S.selCat===c?' sel-'+S.user:''}" onclick="selCat('${c}')">${c}</button>`
+  ).join('');
+}
+function selCat(c){S.selCat=c;renderCats();}
+
+// ── 添加日程 ──
+async function addEvent(){
+  const ts=document.getElementById('timeS').value;
+  const title=document.getElementById('evtT').value.trim();
+  if(!title){showToast('请填写事项名称',false);return;}
+  const note=document.getElementById('evtN').value.trim();
+  const tog=document.getElementById('chkTog').checked;
+  // 上传照片到 Cloudinary，拿回 publicId 列表
+  const photoIds=await uploadPendingPhotos();
+  if(!S.data[S.curDate])S.data[S.curDate]={events:[],note:''};
+  S.data[S.curDate].events.push({
+    id:Date.now(),user:tog?'both':S.user,
+    ts,title,note,cat:S.selCat,
+    photoIds
+  });
+  S.data[S.curDate].events.sort((a,b)=>a.ts.localeCompare(b.ts));
+  await saveDay(S.curDate);
+  document.getElementById('evtT').value='';
+  document.getElementById('evtN').value='';
+  document.getElementById('chkTog').checked=false;
+  pendingPhotos={};renderFormPhotos();
+  showToast('已添加 ✓',true);
+}
+
+// ── 删除日程 ──
+async function delEvent(id){
+  const day=S.data[S.curDate];if(!day)return;
+  const ev=day.events.find(e=>e.id===id);if(!ev)return;
+  if(ev.user!==S.user&&ev.user!=='both'){showToast('只能删除自己的日程',false);return;}
+  await deleteEventPhotos(ev.photoIds);
+  day.events=day.events.filter(e=>e.id!==id);
+  await saveDay(S.curDate);
+  renderTL();
+}
+
+// ── 小结 ──
+async function saveNote(){
+  if(!S.data[S.curDate])S.data[S.curDate]={events:[],note:''};
+  S.data[S.curDate].note=document.getElementById('dayNote').value;
+  await saveDay(S.curDate);
+  showToast('小结已保存',true);
+}
+function loadNote(){document.getElementById('dayNote').value=(S.data[S.curDate]||{}).note||'';}
+
+// ── 时间轴（异步渲染照片）──
+async function renderTL(){
+  const day=S.data[S.curDate]||{events:[],note:''};
+  const evs=day.events;
+  const tl=document.getElementById('timeline');
+  if(!evs.length){
+    tl.innerHTML='<div class="empty-tl">今天还没有日程<br><span style="font-size:12px;color:#ddd;display:block;margin-top:4px">去「写日程」添加吧</span></div>';
+    document.getElementById('noteView').innerHTML='';
+    return;
+  }
+  const minH=Math.min(...evs.map(e=>parseInt(e.ts)));
+  const maxH=Math.max(...evs.map(e=>parseInt(e.ts)))+1;
+  const sH=Math.max(6,minH-1),eH=Math.min(24,maxH+1);
+  let html='<div class="tl-line"></div>';
+  for(let h=sH;h<eH;h++){
+    const hh=p2(h);
+    const slot=evs.filter(e=>e.ts.startsWith(hh));
+    html+=`<div class="tl-slot"><div class="tl-hl">${hh}:00</div>`;
+    if(slot.length){
+      html+='<div class="ev-list">';
+      slot.forEach(e=>{
+        const isBoth=e.user==='both',isF=e.user==='f';
+        const cls=isBoth?'ev-both':isF?'ev-f':'ev-m';
+        const bc=isBoth?'badge-both':isF?'badge-f':'badge-m';
+        const bn=isBoth?'两人同行':NAMES[e.user];
+        const canDel=e.user===S.user||e.user==='both';
+        const hasPhotos=(e.photoIds&&e.photoIds.length>0);
+        html+=`<div class="ev ${cls}" id="ev-${e.id}">
+          ${canDel?`<button class="ev-del" onclick="delEvent(${e.id})">×</button>`:'<span class="ev-lock">🔒</span>'}
+          <div class="ev-head">
+            <span class="ev-time">${e.ts}</span>
+            <span class="badge ${bc}">${bn}</span>
+            <span class="badge badge-cat">${e.cat}</span>
+          </div>
+          <div class="ev-title">${e.title}</div>
+          ${e.note?`<div class="ev-note">${e.note}</div>`:''}
+          ${hasPhotos?`<div class="ev-photos" id="evph-${e.id}"><span style="font-size:11px;color:#ccc">加载照片…</span></div>`:''}
+        </div>`;
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  }
+  tl.innerHTML=html;
+  document.getElementById('noteView').innerHTML=day.note
+    ?`<div class="note-view"><div class="note-view-label">今日小结</div><div class="note-view-text">${day.note}</div></div>`:'';
+  // 填充各事件照片（直接用 Cloudinary URL，无需异步）
+  evs.forEach(e=>{
+    if(!e.photoIds||!e.photoIds.length)return;
+    const el=document.getElementById('evph-'+e.id);
+    if(!el)return;
+    const fullUrls=getEventPhotoUrls(e.photoIds);
+    const thumbUrls=getEventPhotoThumbUrls(e.photoIds);
+    const urlsJson=JSON.stringify(fullUrls);
+    el.innerHTML=thumbUrls.map((thumb,i)=>
+      `<img class="ev-photo-thumb" src="${thumb}" onclick="openLBurls(${urlsJson},${i})" loading="lazy">`
+    ).join('');
+  });
+}
+
+// ── 日历 ──
+function shiftMonth(n){
+  S.calM+=n;
+  if(S.calM>11){S.calM=0;S.calY++;}
+  if(S.calM<0){S.calM=11;S.calY--;}
+  renderCal();
+}
+function renderCal(){
+  const y=S.calY,m=S.calM;
+  document.getElementById('calMonth').textContent=y+'年'+(m+1)+'月';
+  const first=new Date(y,m,1),last=new Date(y,m+1,0);
+  const wd0=first.getDay(),today=todayStr();
+  let cells='';
+  for(let i=0;i<wd0;i++) cells+=mkCell(new Date(y,m,-wd0+i+1),true,today);
+  for(let d=1;d<=last.getDate();d++) cells+=mkCell(new Date(y,m,d),false,today);
+  const rem=(7-(wd0+last.getDate())%7)%7;
+  for(let i=1;i<=rem;i++) cells+=mkCell(new Date(y,m+1,i),true,today);
+  document.getElementById('calGrid').innerHTML=cells;
+  renderPreview(S.calSel);
+}
+function mkCell(date,other,today){
+  const ds=toStr(date);
+  const evs=(S.data[ds]||{events:[]}).events;
+  const hasF=evs.some(e=>e.user==='f'||e.user==='both');
+  const hasM=evs.some(e=>e.user==='m'||e.user==='both');
+  const hasPhoto=evs.some(e=>e.photoIds&&e.photoIds.length>0);
+  let cls='cal-cell';
+  if(other)cls+=' other-month';
+  if(ds===today)cls+=' is-today';
+  if(ds===S.calSel&&ds!==today)cls+=' is-sel-'+S.user;
+  const numEl=ds===today
+    ?`<div class="cal-num" style="background:#1a1a1a;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px">${date.getDate()}</div>`
+    :`<div class="cal-num">${date.getDate()}</div>`;
+  let dots='';
+  if(hasF)dots+=`<div class="cal-dot" style="background:#D4537E"></div>`;
+  if(hasM)dots+=`<div class="cal-dot" style="background:#378ADD"></div>`;
+  if(hasPhoto)dots+=`<div class="cal-photo-dot"></div>`;
+  return `<div class="${cls}" onclick="selDay('${ds}')">${numEl}<div class="cal-dots">${dots}</div></div>`;
+}
+function selDay(ds){S.calSel=ds;renderCal();}
+async function renderPreview(ds){
+  const[y,m,d]=ds.split('-');
+  document.getElementById('previewTitle').textContent=m+'月'+d+'日 星期'+WDS[toDate(ds).getDay()];
+  const day=S.data[ds],evs=day?day.events:[];
+  const pl=document.getElementById('previewList');
+  if(!evs.length){pl.innerHTML='<div class="preview-empty">这天还没有日程记录</div>';return;}
+  // 先渲染骨架
+  pl.innerHTML='<div class="preview-list">'+evs.map(e=>{
+    const isBoth=e.user==='both',isF=e.user==='f';
+    const hasP=e.photoIds&&e.photoIds.length>0;
+    return `<div class="preview-item ${isBoth?'pi-both':isF?'pi-f':'pi-m'}">
+      <div class="pi-bar ${isBoth?'pi-bar-both':isF?'pi-bar-f':'pi-bar-m'}"></div>
+      <div class="pi-body">
+        <div class="pi-time">${e.ts} · ${isBoth?'两人同行':NAMES[e.user]} · ${e.cat}</div>
+        <div class="pi-title">${e.title}</div>
+        ${e.note?`<div class="pi-note">${e.note}</div>`:''}
+        ${hasP?`<div class="pi-photos" id="pip-${e.id}"><span style="font-size:11px;color:#ccc">加载照片…</span></div>`:''}
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+  if(day&&day.note) pl.innerHTML+=`<div class="note-view" style="margin-top:10px"><div class="note-view-label">今日小结</div><div class="note-view-text">${day.note}</div></div>`;
+  // 填充照片（直接用 Cloudinary URL）
+  evs.forEach(e=>{
+    if(!e.photoIds||!e.photoIds.length)return;
+    const el=document.getElementById('pip-'+e.id);
+    if(!el)return;
+    const fullUrls=getEventPhotoUrls(e.photoIds);
+    const thumbUrls=getEventPhotoThumbUrls(e.photoIds);
+    const urlsJson=JSON.stringify(fullUrls);
+    el.innerHTML=thumbUrls.map((thumb,i)=>
+      `<img class="pi-photo" src="${thumb}" onclick="openLBurls(${urlsJson},${i})" loading="lazy">`
+    ).join('');
+  });
+}
+function goToDay(){S.curDate=S.calSel;showPage('today');}
+
+// ── 回顾 ──
+async function renderReview(){
+  const diff=Math.floor((Date.now()-ANNIV)/86400000);
+  document.getElementById('tcNum').textContent=diff;
+  document.getElementById('tcSub').textContent='从 2019年4月17日 开始';
+  document.getElementById('marryDays').textContent=Math.floor((Date.now()-MARRY)/86400000)+'天';
+  document.getElementById('babyDays').textContent=Math.floor((Date.now()-BABY)/86400000)+'天';
+  let total=0,cntF=0,cntM=0;const catC={};CATS.forEach(c=>catC[c]=0);
+  Object.values(S.data).forEach(day=>{
+    day.events.forEach(e=>{
+      total++;
+      if(e.user==='f')cntF++;else if(e.user==='m')cntM++;else{cntF++;cntM++;}
+      catC[e.cat]=(catC[e.cat]||0)+1;
+    });
+  });
+  document.getElementById('statTotal').textContent=total;
+  document.getElementById('statF').textContent=cntF;
+  document.getElementById('statM').textContent=cntM;
+  document.getElementById('reviewSub').textContent='共记录了 '+Object.keys(S.data).length+' 天的故事';
+  const sorted=Object.entries(catC).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('catPills').innerHTML=sorted.map(([name,cnt])=>
+    `<div class="cat-pill"><div class="cp-dot" style="background:${CAT_COLORS[name]||'#888'}"></div><span class="cp-name">${name}</span><span class="cp-cnt">${cnt}次</span></div>`
+  ).join('')||'<span style="font-size:13px;color:#ccc">暂无记录</span>';
+  const dates=Object.keys(S.data).sort((a,b)=>b.localeCompare(a)).slice(0,8);
+  const rl=document.getElementById('recentList');
+  if(!dates.length){rl.innerHTML='<div style="text-align:center;color:#ccc;padding:2rem 0;font-size:14px">还没有任何记录</div>';return;}
+  // 先渲染文字
+  rl.innerHTML=dates.map(ds=>{
+    const day=S.data[ds];if(!day||!day.events.length)return'';
+    const[y,m,d]=ds.split('-');
+    const hasF=day.events.some(e=>e.user==='f');
+    const hasM=day.events.some(e=>e.user==='m');
+    const hasBoth=day.events.some(e=>e.user==='both');
+    const topCls=(hasBoth||(hasF&&hasM))?'re-top-mix':hasF?'re-top-f':'re-top-m';
+    const photoCount=day.events.reduce((s,e)=>s+(e.photoIds?e.photoIds.length:0),0);
+    const items=day.events.slice(0,5).map(e=>{
+      const dc=e.user==='both'?'re-dot-both':e.user==='f'?'re-dot-f':'re-dot-m';
+      const cam=(e.photoIds&&e.photoIds.length)?`<span class="re-item-cam">📷${e.photoIds.length}</span>`:'';
+      return `<div class="re-item"><div class="re-dot ${dc}"></div><div class="re-item-text">${e.title}</div>${cam}<div class="re-item-time">${e.ts}</div></div>`;
+    }).join('');
+    const more=day.events.length>5?`<div style="font-size:12px;color:#bbb;padding:2px 14px 6px">还有 ${day.events.length-5} 条…</div>`:'';
+    const noteHtml=day.note?`<div class="re-note">"${day.note}"</div>`:'';
+    const photoSlot=photoCount?`<div class="re-photos" id="rep-${ds}"><span style="font-size:12px;color:#ccc;padding:4px 0">加载照片…</span></div>`:'';
+    return `<div class="re-card">
+      <div class="re-top ${topCls}">
+        <span>${y}年${m}月${d}日 周${WDS[toDate(ds).getDay()]}</span>
+        <span>${day.events.length}条记录${photoCount?' · '+photoCount+'张照片':''}</span>
+      </div>
+      <div class="re-body">${items}</div>${more}${photoSlot}${noteHtml}
+    </div>`;
+  }).filter(Boolean).join('');
+  // 填充照片（直接用 Cloudinary URL，无需异步）
+  dates.forEach(ds=>{
+    const day=S.data[ds];if(!day)return;
+    const allIds=day.events.flatMap(e=>e.photoIds||[]);
+    if(!allIds.length)return;
+    const el=document.getElementById('rep-'+ds);if(!el)return;
+    const fullUrls=getEventPhotoUrls(allIds.slice(0,6));
+    const thumbUrls=getEventPhotoThumbUrls(allIds.slice(0,6));
+    const urlsJson=JSON.stringify(fullUrls);
+    el.innerHTML=thumbUrls.map((thumb,i)=>
+      `<img class="re-photo" src="${thumb}" onclick="openLBurls(${urlsJson},${i})" loading="lazy">`
+    ).join('');
+  });
+}
+
+// ── Toast ──
+function showToast(msg,ok){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=ok?'#D4537E':'#888';
+  t.style.opacity='1';clearTimeout(t._tmr);
+  t._tmr=setTimeout(()=>t.style.opacity='0',1800);
+}
+
+// 预加载本地缓存（登录前展示）
+loadFromLocal();
+</script>
+</body>
+</html>
