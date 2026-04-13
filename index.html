@@ -458,10 +458,11 @@ function toStr(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate
 // JSONbin 是免费的 JSON 存储服务，无需配置，直接可用
 const JSONBIN_URL='https://api.jsonbin.io/v3/b';
 const JSONBIN_KEY='$2a$10$1DhZoNloCnVf/xnnq57qhunk1h1eh5rsWJ1arFu8wVXmGZeiDmJsa';
-const BIN_ID_KEY='couple_diary_bin_id'; // 本地存储 bin ID
+const BIN_ID_KEY='couple_diary_bin_id';
+const FIXED_BIN_ID='69dccda6856a6821892b23f1'; // 固定 Bin ID，两人共用
 
 async function getBinId(){
-  return localStorage.getItem(BIN_ID_KEY)||null;
+  return FIXED_BIN_ID;
 }
 
 async function loadFromCloud(){
@@ -485,28 +486,13 @@ async function loadFromCloud(){
 
 async function saveToCloud(){
   try{
-    let binId=await getBinId();
-    const payload=JSON.stringify(S.data);
-    if(!binId){
-      // 首次保存，创建新 bin
-      const res=await fetch(JSONBIN_URL,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY,'X-Bin-Name':'couple-diary','X-Bin-Private':'true'},
-        body:payload
-      });
-      if(!res.ok)throw new Error('创建失败');
-      const json=await res.json();
-      binId=json.metadata.id;
-      localStorage.setItem(BIN_ID_KEY,binId);
-    } else {
-      // 更新已有 bin
-      const res=await fetch(`${JSONBIN_URL}/${binId}`,{
-        method:'PUT',
-        headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
-        body:payload
-      });
-      if(!res.ok)throw new Error('更新失败');
-    }
+    const binId=FIXED_BIN_ID;
+    const res=await fetch(`${JSONBIN_URL}/${binId}`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+      body:JSON.stringify(S.data)
+    });
+    if(!res.ok)throw new Error('更新失败');
     saveToLocal();
   }catch(e){
     console.warn('云端保存失败',e);
