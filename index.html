@@ -445,22 +445,15 @@ async function loadFromCloud(){
     loadFromLocal();
     const binId=await getBinId();
     if(!binId)return;
-    const bust=Date.now()+'_'+Math.random().toString(36).slice(2,6);
-    const res=await fetch(`${JSONBIN_URL}/${binId}?cb=${bust}`,{
-      headers:{
-        'X-Master-Key':JSONBIN_KEY,
-        'X-Bin-Meta':'false',
-        'Cache-Control':'no-cache, no-store',
-        'Pragma':'no-cache'
-      }
+    const res=await fetch(`${JSONBIN_URL}/${binId}/latest`,{
+      headers:{'X-Master-Key':JSONBIN_KEY}
     });
     console.log('loadFromCloud status:', res.status);
     if(!res.ok){console.warn('load failed:', res.status); return;}
-    const text=await res.text();
-    console.log('cloud data length:', text.length, text.slice(0,100));
-    const wrapper=JSON.parse(text);
-    // JSONbin GET 返回 {record: {...}, metadata: {...}}
+    const wrapper=await res.json();
+    console.log('wrapper keys:', Object.keys(wrapper));
     const json=wrapper.record||wrapper;
+    console.log('data keys:', Object.keys(json).slice(0,5));
     if(json&&typeof json==='object'){
       S.data=json;
       saveToLocal();
@@ -477,21 +470,14 @@ async function manualSync(){
   if(logEl) logEl.textContent='同步中…';
   try{
     const binId=await getBinId();
-    const bust=Date.now()+'_'+Math.random().toString(36).slice(2,6);
-    const res=await fetch(`${JSONBIN_URL}/${binId}?cb=${bust}`,{
-      headers:{
-        'X-Master-Key':JSONBIN_KEY,
-        'X-Bin-Meta':'false',
-        'Cache-Control':'no-cache, no-store',
-        'Pragma':'no-cache'
-      }
+    const res=await fetch(`${JSONBIN_URL}/${binId}/latest`,{
+      headers:{'X-Master-Key':JSONBIN_KEY}
     });
     if(logEl) logEl.textContent='状态：'+res.status;
     if(!res.ok){showToast('同步失败 '+res.status, false);btn.classList.remove('spinning');return;}
-    const text=await res.text();
-    if(logEl) logEl.textContent='状态：'+res.status+' 数据长度：'+text.length;
-    const wrapper=JSON.parse(text);
+    const wrapper=await res.json();
     const json=wrapper.record||wrapper;
+    if(logEl) logEl.textContent='状态：'+res.status+' keys：'+Object.keys(json).length;
     if(json&&typeof json==='object'){
       S.data=json;
       saveToLocal();
