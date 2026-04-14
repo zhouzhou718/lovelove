@@ -446,7 +446,7 @@ async function loadFromCloud(){
     const binId=await getBinId();
     if(!binId)return;
     const bust=Date.now()+'_'+Math.random().toString(36).slice(2,6);
-    const res=await fetch(`${JSONBIN_URL}/${binId}/latest?cb=${bust}`,{
+    const res=await fetch(`${JSONBIN_URL}/${binId}?cb=${bust}`,{
       headers:{
         'X-Master-Key':JSONBIN_KEY,
         'X-Bin-Meta':'false',
@@ -457,9 +457,9 @@ async function loadFromCloud(){
     console.log('loadFromCloud status:', res.status);
     if(!res.ok){console.warn('load failed:', res.status); return;}
     const text=await res.text();
-    console.log('cloud data:', text.slice(0,200));
+    console.log('cloud data length:', text.length, text.slice(0,100));
     const json=JSON.parse(text);
-    if(json&&typeof json==='object'&&!json.init){
+    if(json&&typeof json==='object'){
       S.data=json;
       saveToLocal();
     }
@@ -476,7 +476,7 @@ async function manualSync(){
   try{
     const binId=await getBinId();
     const bust=Date.now()+'_'+Math.random().toString(36).slice(2,6);
-    const res=await fetch(`${JSONBIN_URL}/${binId}/latest?cb=${bust}`,{
+    const res=await fetch(`${JSONBIN_URL}/${binId}?cb=${bust}`,{
       headers:{
         'X-Master-Key':JSONBIN_KEY,
         'X-Bin-Meta':'false',
@@ -489,7 +489,7 @@ async function manualSync(){
     const text=await res.text();
     if(logEl) logEl.textContent='状态：'+res.status+' 数据长度：'+text.length;
     const json=JSON.parse(text);
-    if(json&&typeof json==='object'&&!json.init){
+    if(json&&typeof json==='object'){
       S.data=json;
       saveToLocal();
     }
