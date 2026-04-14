@@ -182,38 +182,18 @@ textarea.fi{resize:none}
 .pi-photo{width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer}
 .preview-empty{font-size:14px;color:#ccc;text-align:center;padding:1.5rem 0}
 
-/* REVIEW */
+/* REVIEW / MILESTONES */
 .review-top{background:#fff;padding:16px 18px 12px;border-bottom:1px solid #ede9e0;margin-bottom:1px}
 .review-top-title{font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:4px}
 .review-top-sub{font-size:13px;color:#aaa}
-.together-card{margin:14px 18px;background:#FBEAF0;border-radius:16px;border:1px solid #F4C0D1;padding:16px 20px;display:flex;align-items:center;gap:16px}
-.tc-num{font-size:42px;font-weight:700;color:#D4537E;min-width:72px;text-align:center}
-.tc-label{font-size:15px;font-weight:600;color:#99355A}
-.tc-sub{font-size:12px;color:#C06E8A;margin-top:4px}
-.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 18px 14px}
-.stat-card{background:#fff;border-radius:14px;padding:14px 10px;text-align:center;border:1px solid #ede9e0}
-.stat-num{font-size:26px;font-weight:700;color:#1a1a1a}
-.stat-label{font-size:11px;color:#aaa;margin-top:4px}
-.sec-title{font-size:14px;font-weight:600;color:#1a1a1a;padding:0 18px 10px}
-.cat-pills{padding:0 18px 16px;display:flex;gap:8px;flex-wrap:wrap}
-.cat-pill{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #ede9e0;border-radius:20px;padding:6px 12px 6px 8px}
-.cp-dot{width:8px;height:8px;border-radius:50%}
-.cp-name{font-size:13px;color:#555}
-.cp-cnt{font-size:12px;color:#aaa;margin-left:2px}
-.recent-list{padding:0 18px;display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
-.re-card{background:#fff;border-radius:14px;border:1px solid #ede9e0;overflow:hidden}
-.re-top{padding:9px 14px;font-size:12px;color:#fff;font-weight:600;display:flex;align-items:center;justify-content:space-between}
-.re-top-f{background:#D4537E}.re-top-m{background:#378ADD}.re-top-mix{background:#639922}
-.re-body{padding:10px 14px;display:flex;flex-direction:column;gap:7px}
-.re-item{display:flex;align-items:center;gap:8px}
-.re-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.re-dot-f{background:#D4537E}.re-dot-m{background:#378ADD}.re-dot-both{background:#639922}
-.re-item-text{font-size:13px;color:#333;flex:1}
-.re-item-time{font-size:11px;color:#ccc}
-.re-item-cam{font-size:11px;color:#EF9F27;margin-left:2px}
-.re-note{font-size:12px;color:#999;padding:8px 14px 10px;border-top:1px solid #f5f3ef;line-height:1.6;font-style:italic}
-.re-photos{padding:0 14px 12px;display:flex;gap:5px;flex-wrap:wrap}
-.re-photo{width:56px;height:56px;object-fit:cover;border-radius:7px;cursor:pointer}
+.milestones{padding:14px 18px 0;display:flex;flex-direction:column;gap:10px}
+.ms-card{border-radius:16px;border:1px solid;padding:16px 18px;display:flex;align-items:center;gap:16px;position:relative}
+.ms-days{font-size:36px;font-weight:700;min-width:72px;text-align:center;line-height:1}
+.ms-days-unit{font-size:13px;font-weight:500;margin-top:2px;text-align:center}
+.ms-label{font-size:15px;font-weight:600;margin-bottom:4px}
+.ms-date{font-size:12px;margin-top:3px}
+.ms-del{position:absolute;right:12px;top:12px;background:none;border:none;cursor:pointer;font-size:16px;opacity:.35;padding:2px}
+.ms-del:active{opacity:.9}
 
 /* TOAST */
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);padding:9px 22px;border-radius:24px;font-size:14px;color:#fff;z-index:200;pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap}
@@ -371,41 +351,32 @@ textarea.fi{resize:none}
   <!-- 回顾 -->
   <div class="page" id="page-review">
     <div class="review-top">
-      <div class="review-top-title">我们的故事</div>
-      <div class="review-top-sub" id="reviewSub"></div>
+      <div class="review-top-title">重要的日子</div>
+      <div class="review-top-sub">我们一起走过的时光</div>
     </div>
-    <div class="together-card">
-      <div class="tc-num" id="tcNum">—</div>
-      <div>
-        <div class="tc-label">在一起的天数</div>
-        <div class="tc-sub" id="tcSub"></div>
-      </div>
-    </div>
-    <div style="margin:0 18px 14px;display:flex;flex-direction:column;gap:8px">
-      <div style="background:#E6F1FB;border-radius:14px;border:1px solid #B5D4F4;padding:13px 16px;display:flex;align-items:center;gap:14px">
-        <div style="font-size:28px;font-weight:700;color:#378ADD;min-width:60px;text-align:center" id="marryDays">—</div>
-        <div>
-          <div style="font-size:14px;font-weight:600;color:#185FA5">领证纪念日</div>
-          <div style="font-size:12px;color:#378ADD;margin-top:3px">2020年3月27日</div>
+
+    <!-- 固定3个 -->
+    <div class="milestones" id="fixedMilestones"></div>
+
+    <!-- 自定义日子 -->
+    <div style="padding:0 18px">
+      <div class="sec-title" style="padding:14px 0 10px">自定义纪念日</div>
+      <div id="customMilestones"></div>
+
+      <!-- 添加表单 -->
+      <div class="card" id="addMilestoneCard">
+        <div class="card-title">添加新纪念日</div>
+        <div class="form-row">
+          <span class="form-label">名称</span>
+          <input type="text" id="msName" placeholder="比如：第一次旅行" class="fi">
         </div>
-      </div>
-      <div style="background:#EAF3DE;border-radius:14px;border:1px solid #C0DD97;padding:13px 16px;display:flex;align-items:center;gap:14px">
-        <div style="font-size:28px;font-weight:700;color:#3B6D11;min-width:60px;text-align:center" id="babyDays">—</div>
-        <div>
-          <div style="font-size:14px;font-weight:600;color:#3B6D11">宝宝出生</div>
-          <div style="font-size:12px;color:#639922;margin-top:3px">2020年7月18日</div>
+        <div class="form-row">
+          <span class="form-label">日期</span>
+          <input type="date" id="msDate" class="fi">
         </div>
+        <button class="add-btn" id="addMsBtn" onclick="addMilestone()" style="margin-top:4px">添加</button>
       </div>
     </div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">总记录数</div></div>
-      <div class="stat-card"><div class="stat-num" id="statF">0</div><div class="stat-label">ZRL 写的</div></div>
-      <div class="stat-card"><div class="stat-num" id="statM">0</div><div class="stat-label">GYL 写的</div></div>
-    </div>
-    <div class="sec-title">活动分布</div>
-    <div class="cat-pills" id="catPills"></div>
-    <div class="sec-title">最近日记</div>
-    <div class="recent-list" id="recentList"></div>
   </div>
 
   <div class="bottom-nav">
@@ -427,9 +398,6 @@ const CAT_COLORS={'工作':'#378ADD','用餐':'#D4537E','运动':'#639922','约�
 const CREDS={f:'19930131',m:'19920401'};
 const NAMES={f:'ZRL',m:'GYL'};
 const WDS=['日','一','二','三','四','五','六'];
-const ANNIV=new Date('2019-04-17');
-const MARRY=new Date('2020-03-27');
-const BABY=new Date('2020-07-18');
 
 // Cloudinary 配置（照片 + 日记数据共用同一个账号）
 const CLD_CLOUD='dnakz7jef';
@@ -467,15 +435,18 @@ async function getBinId(){
 
 async function loadFromCloud(){
   try{
-    loadFromLocal(); // 先用本地缓存快速显示
+    loadFromLocal();
     const binId=await getBinId();
-    if(!binId)return; // 首次使用，还没有云端数据
+    if(!binId)return;
     const res=await fetch(`${JSONBIN_URL}/${binId}/latest`,{
       headers:{'X-Master-Key':JSONBIN_KEY,'X-Bin-Meta':'false'}
     });
-    if(!res.ok)return;
-    const json=await res.json();
-    if(json&&typeof json==='object'){
+    console.log('loadFromCloud status:', res.status);
+    if(!res.ok){console.warn('load failed:', res.status); return;}
+    const text=await res.text();
+    console.log('cloud data:', text.slice(0,200));
+    const json=JSON.parse(text);
+    if(json&&typeof json==='object'&&!json.init){
       S.data=json;
       saveToLocal();
     }
@@ -487,13 +458,19 @@ async function loadFromCloud(){
 async function saveToCloud(){
   try{
     const binId=FIXED_BIN_ID;
+    const payload=JSON.stringify(S.data);
+    console.log('saveToCloud payload:', payload.slice(0,100));
     const res=await fetch(`${JSONBIN_URL}/${binId}`,{
       method:'PUT',
       headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
-      body:JSON.stringify(S.data)
+      body:payload
     });
-    if(!res.ok)throw new Error('更新失败');
+    console.log('saveToCloud status:', res.status);
+    const text=await res.text();
+    console.log('saveToCloud response:', text.slice(0,200));
+    if(!res.ok)throw new Error('更新失败 '+res.status);
     saveToLocal();
+    showToast('已同步 ✓', true);
   }catch(e){
     console.warn('云端保存失败',e);
     saveToLocal();
@@ -918,70 +895,96 @@ async function renderPreview(ds){
 }
 function goToDay(){S.curDate=S.calSel;showPage('today');}
 
-// ── 回顾 ──
-async function renderReview(){
-  const diff=Math.floor((Date.now()-ANNIV)/86400000);
-  document.getElementById('tcNum').textContent=diff;
-  document.getElementById('tcSub').textContent='从 2019年4月17日 开始';
-  document.getElementById('marryDays').textContent=Math.floor((Date.now()-MARRY)/86400000)+'天';
-  document.getElementById('babyDays').textContent=Math.floor((Date.now()-BABY)/86400000)+'天';
-  let total=0,cntF=0,cntM=0;const catC={};CATS.forEach(c=>catC[c]=0);
-  Object.values(S.data).forEach(day=>{
-    day.events.forEach(e=>{
-      total++;
-      if(e.user==='f')cntF++;else if(e.user==='m')cntM++;else{cntF++;cntM++;}
-      catC[e.cat]=(catC[e.cat]||0)+1;
-    });
-  });
-  document.getElementById('statTotal').textContent=total;
-  document.getElementById('statF').textContent=cntF;
-  document.getElementById('statM').textContent=cntM;
-  document.getElementById('reviewSub').textContent='共记录了 '+Object.keys(S.data).length+' 天的故事';
-  const sorted=Object.entries(catC).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
-  document.getElementById('catPills').innerHTML=sorted.map(([name,cnt])=>
-    `<div class="cat-pill"><div class="cp-dot" style="background:${CAT_COLORS[name]||'#888'}"></div><span class="cp-name">${name}</span><span class="cp-cnt">${cnt}次</span></div>`
-  ).join('')||'<span style="font-size:13px;color:#ccc">暂无记录</span>';
-  const dates=Object.keys(S.data).sort((a,b)=>b.localeCompare(a)).slice(0,8);
-  const rl=document.getElementById('recentList');
-  if(!dates.length){rl.innerHTML='<div style="text-align:center;color:#ccc;padding:2rem 0;font-size:14px">还没有任何记录</div>';return;}
-  // 先渲染文字
-  rl.innerHTML=dates.map(ds=>{
-    const day=S.data[ds];if(!day||!day.events.length)return'';
-    const[y,m,d]=ds.split('-');
-    const hasF=day.events.some(e=>e.user==='f');
-    const hasM=day.events.some(e=>e.user==='m');
-    const hasBoth=day.events.some(e=>e.user==='both');
-    const topCls=(hasBoth||(hasF&&hasM))?'re-top-mix':hasF?'re-top-f':'re-top-m';
-    const photoCount=day.events.reduce((s,e)=>s+(e.photoIds?e.photoIds.length:0),0);
-    const items=day.events.slice(0,5).map(e=>{
-      const dc=e.user==='both'?'re-dot-both':e.user==='f'?'re-dot-f':'re-dot-m';
-      const cam=(e.photoIds&&e.photoIds.length)?`<span class="re-item-cam">📷${e.photoIds.length}</span>`:'';
-      return `<div class="re-item"><div class="re-dot ${dc}"></div><div class="re-item-text">${e.title}</div>${cam}<div class="re-item-time">${e.ts}</div></div>`;
-    }).join('');
-    const more=day.events.length>5?`<div style="font-size:12px;color:#bbb;padding:2px 14px 6px">还有 ${day.events.length-5} 条…</div>`:'';
-    const noteHtml=day.note?`<div class="re-note">"${day.note}"</div>`:'';
-    const photoSlot=photoCount?`<div class="re-photos" id="rep-${ds}"><span style="font-size:12px;color:#ccc;padding:4px 0">加载照片…</span></div>`:'';
-    return `<div class="re-card">
-      <div class="re-top ${topCls}">
-        <span>${y}年${m}月${d}日 周${WDS[toDate(ds).getDay()]}</span>
-        <span>${day.events.length}条记录${photoCount?' · '+photoCount+'张照片':''}</span>
+// ── 重要日子 ──
+const FIXED_MS=[
+  {label:'在一起',date:'2019-04-17',bg:'#FBEAF0',border:'#F4C0D1',numColor:'#D4537E',labelColor:'#99355A',dateColor:'#C06E8A'},
+  {label:'领证纪念日',date:'2020-03-27',bg:'#E6F1FB',border:'#B5D4F4',numColor:'#378ADD',labelColor:'#185FA5',dateColor:'#378ADD'},
+  {label:'宝宝出生',date:'2020-07-18',bg:'#EAF3DE',border:'#C0DD97',numColor:'#3B6D11',labelColor:'#3B6D11',dateColor:'#639922'},
+];
+const MS_COLORS=[
+  {bg:'#F1EFE8',border:'#D3D1C7',numColor:'#5F5E5A',labelColor:'#444441',dateColor:'#888780'},
+  {bg:'#FAEEDA',border:'#FAC775',numColor:'#854F0B',labelColor:'#633806',dateColor:'#BA7517'},
+  {bg:'#EEEDFE',border:'#CECBF6',numColor:'#534AB7',labelColor:'#3C3489',dateColor:'#7F77DD'},
+  {bg:'#FAECE7',border:'#F5C4B3',numColor:'#993C1D',labelColor:'#712B13',dateColor:'#D85A30'},
+];
+
+function daysSince(dateStr){
+  return Math.floor((Date.now()-new Date(dateStr+'T00:00:00'))/86400000);
+}
+function fmtDateCN(dateStr){
+  const[y,m,d]=dateStr.split('-');
+  return y+'年'+m+'月'+d+'日';
+}
+function loadCustomMS(){
+  return S.data.__milestones||[];
+}
+async function saveCustomMS(list){
+  S.data.__milestones=list;
+  await saveToCloud();
+}
+
+function renderReview(){
+  // 固定纪念日
+  document.getElementById('fixedMilestones').innerHTML=FIXED_MS.map(ms=>{
+    const days=daysSince(ms.date);
+    return `<div class="ms-card" style="background:${ms.bg};border-color:${ms.border}">
+      <div>
+        <div class="ms-days" style="color:${ms.numColor}">${days}</div>
+        <div class="ms-days-unit" style="color:${ms.numColor}">天</div>
       </div>
-      <div class="re-body">${items}</div>${more}${photoSlot}${noteHtml}
+      <div>
+        <div class="ms-label" style="color:${ms.labelColor}">${ms.label}</div>
+        <div class="ms-date" style="color:${ms.dateColor}">${fmtDateCN(ms.date)}</div>
+      </div>
     </div>`;
-  }).filter(Boolean).join('');
-  // 填充照片（直接用 Cloudinary URL，无需异步）
-  dates.forEach(ds=>{
-    const day=S.data[ds];if(!day)return;
-    const allIds=day.events.flatMap(e=>e.photoIds||[]);
-    if(!allIds.length)return;
-    const el=document.getElementById('rep-'+ds);if(!el)return;
-    const fullUrls=getEventPhotoUrls(allIds.slice(0,6));
-    const thumbUrls=getEventPhotoThumbUrls(allIds.slice(0,6));
-    const urlsJson=JSON.stringify(fullUrls);
-    el.innerHTML=thumbUrls.map((thumb,i)=>
-      `<img class="re-photo" src="${thumb}" onclick="openLBurls(${urlsJson},${i})" loading="lazy">`
-    ).join('');
-  });
+  }).join('');
+
+  // 自定义纪念日
+  const customs=loadCustomMS();
+  const cEl=document.getElementById('customMilestones');
+  if(!customs.length){
+    cEl.innerHTML='<div style="font-size:13px;color:#ccc;text-align:center;padding:8px 0 16px">还没有自定义纪念日</div>';
+  }else{
+    cEl.innerHTML=customs.map((ms,i)=>{
+      const c=MS_COLORS[i%MS_COLORS.length];
+      const days=daysSince(ms.date);
+      return `<div class="ms-card" style="background:${c.bg};border-color:${c.border};margin-bottom:10px">
+        <div>
+          <div class="ms-days" style="color:${c.numColor}">${days}</div>
+          <div class="ms-days-unit" style="color:${c.numColor}">天</div>
+        </div>
+        <div style="flex:1">
+          <div class="ms-label" style="color:${c.labelColor}">${ms.label}</div>
+          <div class="ms-date" style="color:${c.dateColor}">${fmtDateCN(ms.date)}</div>
+        </div>
+        <button class="ms-del" onclick="delMilestone(${i})">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  // 添加按钮主题色
+  document.getElementById('addMsBtn').className='add-btn add-btn-'+(S.user||'f');
+}
+
+async function addMilestone(){
+  const name=document.getElementById('msName').value.trim();
+  const date=document.getElementById('msDate').value;
+  if(!name){showToast('请填写纪念日名称',false);return;}
+  if(!date){showToast('请选择日期',false);return;}
+  const list=loadCustomMS();
+  list.push({label:name,date});
+  await saveCustomMS(list);
+  document.getElementById('msName').value='';
+  document.getElementById('msDate').value='';
+  renderReview();
+  showToast('已添加 ✓',true);
+}
+
+async function delMilestone(idx){
+  const list=loadCustomMS();
+  list.splice(idx,1);
+  await saveCustomMS(list);
+  renderReview();
 }
 
 // ── Toast ──
