@@ -256,6 +256,7 @@ textarea.fi{resize:none}
       <button class="logout-btn" onclick="doLogout()">退出</button>
     </div>
   </div>
+  <div id="syncLog" style="font-size:11px;color:#888;text-align:center;padding:4px 18px;background:#fff;border-bottom:1px solid #f0ede5;min-height:4px"></div>
 
   <!-- 今天 -->
   <div class="page on" id="page-today">
@@ -470,17 +471,39 @@ async function loadFromCloud(){
 async function manualSync(){
   const btn=document.getElementById('syncBtn');
   btn.classList.add('spinning');
-  await loadFromCloud();
-  // 刷新当前页面内容
-  const activePage=['today','cal','review'].find(p=>document.getElementById('page-'+p).classList.contains('on'));
-  if(activePage==='today'){
-    loadNote();
-    if(document.getElementById('sec-tl').classList.contains('on')) renderTL();
+  const logEl=document.getElementById('syncLog');
+  if(logEl) logEl.textContent='同步中…';
+  try{
+    const binId=await getBinId();
+    const bust=Date.now()+'_'+Math.random().toString(36).slice(2,6);
+    const res=await fetch(`${JSONBIN_URL}/${binId}/latest?cb=${bust}`,{
+      headers:{
+        'X-Master-Key':JSONBIN_KEY,
+        'X-Bin-Meta':'false',
+        'Cache-Control':'no-cache, no-store',
+        'Pragma':'no-cache'
+      }
+    });
+    if(logEl) logEl.textContent='状态：'+res.status;
+    if(!res.ok){showToast('同步失败 '+res.status, false);btn.classList.remove('spinning');return;}
+    const text=await res.text();
+    if(logEl) logEl.textContent='状态：'+res.status+' 数据长度：'+text.length;
+    const json=JSON.parse(text);
+    if(json&&typeof json==='object'&&!json.init){
+      S.data=json;
+      saveToLocal();
+    }
+    const activePage=['today','cal','review'].find(p=>document.getElementById('page-'+p).classList.contains('on'));
+    if(activePage==='today'){loadNote();if(document.getElementById('sec-tl').classList.contains('on'))renderTL();}
+    if(activePage==='cal')renderCal();
+    if(activePage==='review')renderReview();
+    showToast('已同步 ✓',true);
+    if(logEl) setTimeout(()=>logEl.textContent='',3000);
+  }catch(e){
+    if(logEl) logEl.textContent='错误：'+e.message;
+    showToast('同步出错',false);
   }
-  if(activePage==='cal') renderCal();
-  if(activePage==='review') renderReview();
   btn.classList.remove('spinning');
-  showToast('已同步最新数据',true);
 }
 
 async function saveToCloud(){
