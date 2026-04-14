@@ -658,12 +658,19 @@ async function savePhotos(){}
 let LB={urls:[],idx:0};
 function openLBurls(urls,idx){LB={urls:Array.isArray(urls)?urls:[urls],idx:idx||0};showLB();}
 function lbOpenEv(imgEl){
-  // 找到同一事件下所有照片
-  const evid=imgEl.dataset.evid;
-  const siblings=document.querySelectorAll(`[data-evid="${evid}"]`);
-  const urls=Array.from(siblings).map(el=>el.dataset.full||el.src);
-  const idx=parseInt(imgEl.dataset.idx)||0;
-  openLBurls(urls,idx);
+  try{
+    const evid=imgEl.dataset.evid;
+    const container=imgEl.closest('.ev-photos,.pi-photos,.re-photos')||imgEl.parentElement;
+    const siblings=container.querySelectorAll('[data-full]');
+    const urls=siblings.length
+      ? Array.from(siblings).map(el=>el.dataset.full)
+      : [imgEl.dataset.full||imgEl.src];
+    const idx=parseInt(imgEl.dataset.idx)||0;
+    openLBurls(urls,idx);
+  }catch(e){
+    // 降级：直接打开单张
+    openLBurls([imgEl.dataset.full||imgEl.src],0);
+  }
 }
 function showLB(){
   if(!LB.urls.length)return;
@@ -709,6 +716,7 @@ async function doLogin(){
   }
 }
 function doLogout(){
+  closeLB();
   S.role=null;S.user=null;
   document.getElementById('scr-app').classList.remove('on');
   document.getElementById('scr-login').classList.add('on');
