@@ -458,7 +458,9 @@ async function loadFromCloud(){
     if(!res.ok){console.warn('load failed:', res.status); return;}
     const text=await res.text();
     console.log('cloud data length:', text.length, text.slice(0,100));
-    const json=JSON.parse(text);
+    const wrapper=JSON.parse(text);
+    // JSONbin GET 返回 {record: {...}, metadata: {...}}
+    const json=wrapper.record||wrapper;
     if(json&&typeof json==='object'){
       S.data=json;
       saveToLocal();
@@ -488,7 +490,8 @@ async function manualSync(){
     if(!res.ok){showToast('同步失败 '+res.status, false);btn.classList.remove('spinning');return;}
     const text=await res.text();
     if(logEl) logEl.textContent='状态：'+res.status+' 数据长度：'+text.length;
-    const json=JSON.parse(text);
+    const wrapper=JSON.parse(text);
+    const json=wrapper.record||wrapper;
     if(json&&typeof json==='object'){
       S.data=json;
       saveToLocal();
