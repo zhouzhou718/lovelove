@@ -541,10 +541,8 @@ function loadFromLocal(){
 }
 
 async function saveDay(date){
-  if(S.data[date]){
-    saveToLocal();
-    await saveToCloud();
-  }
+  saveToLocal();
+  await saveToCloud();
 }
 
 // ── 照片：表单预上传 ──
@@ -787,7 +785,7 @@ async function addEvent(){
   document.getElementById('evtN').value='';
   document.getElementById('chkTog').checked=false;
   pendingPhotos={};renderFormPhotos();
-  showToast('已添加 ✓',true);
+  showToast('添加成功，同步中…',true);
 }
 
 // ── 删除日程 ──
