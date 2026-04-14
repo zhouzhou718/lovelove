@@ -655,8 +655,25 @@ async function savePhotos(){}
 
 
 // ── 灯箱 ──
-function openLBurls(urls,idx){LB={urls,idx};showLB();}
-function showLB(){if(!LB.urls.length)return;document.getElementById('lbImg').src=LB.urls[LB.idx];document.getElementById('lightbox').classList.add('on');}
+let LB={urls:[],idx:0};
+function openLBurls(urls,idx){LB={urls:Array.isArray(urls)?urls:[urls],idx:idx||0};showLB();}
+function lbOpenEv(imgEl){
+  // 找到同一事件下所有照片
+  const evid=imgEl.dataset.evid;
+  const siblings=document.querySelectorAll(`[data-evid="${evid}"]`);
+  const urls=Array.from(siblings).map(el=>el.dataset.full||el.src);
+  const idx=parseInt(imgEl.dataset.idx)||0;
+  openLBurls(urls,idx);
+}
+function showLB(){
+  if(!LB.urls.length)return;
+  document.getElementById('lbImg').src=LB.urls[LB.idx];
+  document.getElementById('lightbox').classList.add('on');
+  // 隐藏箭头如果只有一张
+  const show=LB.urls.length>1;
+  document.querySelector('.lightbox-prev').style.display=show?'':'none';
+  document.querySelector('.lightbox-next').style.display=show?'':'none';
+}
 function closeLB(){document.getElementById('lightbox').classList.remove('on');document.getElementById('lbImg').src='';}
 function lbBg(e){if(e.target===document.getElementById('lightbox'))closeLB();}
 function lbNav(dir,e){e.stopPropagation();LB.idx=(LB.idx+dir+LB.urls.length)%LB.urls.length;document.getElementById('lbImg').src=LB.urls[LB.idx];}
@@ -730,7 +747,13 @@ function showSec(s){
     document.getElementById('stab-'+x).className='sub-tab'+(x===s?' on-'+S.user:'');
   });
   if(s==='tl')renderTL();
-  if(s==='write'){loadNote();pendingPhotos={};renderFormPhotos();}
+  if(s==='write'){
+    loadNote();
+    pendingPhotos={};renderFormPhotos();
+    // 自动设为当前时间
+    const now=new Date();
+    document.getElementById('timeS').value=p2(now.getHours())+':'+p2(now.getMinutes());
+  }
 }
 function shiftDay(n){
   const d=toDate(S.curDate);d.setDate(d.getDate()+n);
@@ -845,16 +868,15 @@ async function renderTL(){
   tl.innerHTML=html;
   document.getElementById('noteView').innerHTML=day.note
     ?`<div class="note-view"><div class="note-view-label">今日小结</div><div class="note-view-text">${day.note}</div></div>`:'';
-  // 填充各事件照片（直接用 Cloudinary URL，无需异步）
+  // 填充各事件照片
   evs.forEach(e=>{
     if(!e.photoIds||!e.photoIds.length)return;
     const el=document.getElementById('evph-'+e.id);
     if(!el)return;
     const fullUrls=getEventPhotoUrls(e.photoIds);
     const thumbUrls=getEventPhotoThumbUrls(e.photoIds);
-    const urlsJson=JSON.stringify(fullUrls);
     el.innerHTML=thumbUrls.map((thumb,i)=>
-      `<img class="ev-photo-thumb" src="${thumb}" onclick="openLBurls(${urlsJson},${i})" loading="lazy">`
+      `<img class="ev-photo-thumb" src="${thumb}" data-full="${fullUrls[i]}" data-idx="${i}" data-evid="${e.id}" onclick="lbOpenEv(this)" loading="lazy">`
     ).join('');
   });
 }
@@ -927,9 +949,8 @@ async function renderPreview(ds){
     if(!el)return;
     const fullUrls=getEventPhotoUrls(e.photoIds);
     const thumbUrls=getEventPhotoThumbUrls(e.photoIds);
-    const urlsJson=JSON.stringify(fullUrls);
     el.innerHTML=thumbUrls.map((thumb,i)=>
-      `<img class="pi-photo" src="${thumb}" onclick="openLBurls(${urlsJson},${i})" loading="lazy">`
+      `<img class="pi-photo" src="${thumb}" data-full="${fullUrls[i]}" data-idx="${i}" data-evid="${e.id}" onclick="lbOpenEv(this)" loading="lazy">`
     ).join('');
   });
 }
