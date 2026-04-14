@@ -41,6 +41,9 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica 
 .cur-name{font-size:15px;font-weight:700;color:#1a1a1a}
 .cur-sub{font-size:12px;color:#aaa;margin-top:1px}
 .logout-btn{font-size:13px;color:#aaa;cursor:pointer;border:1px solid #e0ddd5;border-radius:8px;padding:5px 12px;background:none}
+.sync-btn{font-size:18px;color:#aaa;cursor:pointer;border:1px solid #e0ddd5;border-radius:8px;padding:3px 10px;background:none;line-height:1}
+.sync-btn.spinning{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid #ede9e0;display:flex;z-index:20}
@@ -125,7 +128,7 @@ textarea.fi{resize:none}
 .badge-cat{background:#f0ede5;color:#888}
 .ev-title{font-size:14px;font-weight:600;color:#1a1a1a}
 .ev-note{font-size:12px;color:#999;margin-top:3px;line-height:1.5}
-.ev-del{position:absolute;right:8px;top:8px;background:none;border:none;cursor:pointer;font-size:18px;color:#ccc;padding:0 2px;line-height:1}
+.ev-del{position:absolute;right:8px;top:8px;background:none;border:none;cursor:pointer;font-size:18px;color:#ccc;padding:4px;line-height:1;z-index:2;-webkit-tap-highlight-color:rgba(0,0,0,0)}
 .ev-del:active{color:#c0392b}
 .ev-lock{position:absolute;right:10px;top:10px;font-size:12px;color:#ccc}
 
@@ -248,7 +251,10 @@ textarea.fi{resize:none}
         <div class="cur-sub" id="curSub"></div>
       </div>
     </div>
-    <button class="logout-btn" onclick="doLogout()">退出</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="sync-btn" id="syncBtn" onclick="manualSync()" title="同步数据">↻</button>
+      <button class="logout-btn" onclick="doLogout()">退出</button>
+    </div>
   </div>
 
   <!-- 今天 -->
@@ -438,8 +444,14 @@ async function loadFromCloud(){
     loadFromLocal();
     const binId=await getBinId();
     if(!binId)return;
-    const res=await fetch(`${JSONBIN_URL}/${binId}/latest`,{
-      headers:{'X-Master-Key':JSONBIN_KEY,'X-Bin-Meta':'false'}
+    const bust=Date.now()+'_'+Math.random().toString(36).slice(2,6);
+    const res=await fetch(`${JSONBIN_URL}/${binId}/latest?cb=${bust}`,{
+      headers:{
+        'X-Master-Key':JSONBIN_KEY,
+        'X-Bin-Meta':'false',
+        'Cache-Control':'no-cache, no-store',
+        'Pragma':'no-cache'
+      }
     });
     console.log('loadFromCloud status:', res.status);
     if(!res.ok){console.warn('load failed:', res.status); return;}
@@ -453,6 +465,22 @@ async function loadFromCloud(){
   }catch(e){
     console.warn('云端加载失败，使用本地缓存',e);
   }
+}
+
+async function manualSync(){
+  const btn=document.getElementById('syncBtn');
+  btn.classList.add('spinning');
+  await loadFromCloud();
+  // 刷新当前页面内容
+  const activePage=['today','cal','review'].find(p=>document.getElementById('page-'+p).classList.contains('on'));
+  if(activePage==='today'){
+    loadNote();
+    if(document.getElementById('sec-tl').classList.contains('on')) renderTL();
+  }
+  if(activePage==='cal') renderCal();
+  if(activePage==='review') renderReview();
+  btn.classList.remove('spinning');
+  showToast('已同步最新数据',true);
 }
 
 async function saveToCloud(){
@@ -746,8 +774,10 @@ async function delEvent(id){
   if(ev.user!==S.user&&ev.user!=='both'){showToast('只能删除自己的日程',false);return;}
   await deleteEventPhotos(ev.photoIds);
   day.events=day.events.filter(e=>e.id!==id);
-  await saveDay(S.curDate);
+  saveToLocal();
   renderTL();
+  await saveToCloud();
+  showToast('已删除',true);
 }
 
 // ── 小结 ──
