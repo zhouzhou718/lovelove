@@ -982,40 +982,26 @@ async function renderPreview(ds){
   });
 }
 // ── 评论 ──
-// comments 结构: {f: {text, time}, m: {text, time}} 存在 event 上
-function canAddComment(e){
-  // 对方的日程、或共同完成的日程，且当前用户还没有评论
-  if(e.user===S.user) return false; // 自己的日程不能评论
-  if(e.comments&&e.comments[S.user]) return false; // 已经评论过了
-  return true;
-}
+// comments 结构: [{user, text, time}, ...] 数组
 function renderCommentBlock(e){
-  const comments=e.comments||{};
-  const hasAny=comments.f||comments.m;
-  const canAdd=canAddComment(e);
-  if(!hasAny&&!canAdd) return '';
+  const comments=Array.isArray(e.comments)?e.comments:[];
   let html='<div class="pi-comment-wrap">';
-  // 已有评论
-  ['f','m'].forEach(u=>{
-    if(!comments[u]) return;
-    const avBg=u==='f'?'#F4C0D1':'#B5D4F4';
-    const avColor=u==='f'?'#72243E':'#0C447C';
-    const canDel=u===S.user;
+  comments.forEach((c,i)=>{
+    const avBg=c.user==='f'?'#F4C0D1':'#B5D4F4';
+    const avColor=c.user==='f'?'#72243E':'#0C447C';
+    const canDel=c.user===S.user;
     html+=`<div class="pi-comment-existing">
-      <div class="pi-comment-av" style="background:${avBg};color:${avColor}">${u==='f'?'她':'他'}</div>
-      <div class="pi-comment-bubble">${escHtml(comments[u].text)}
-        ${canDel?`<button class="pi-comment-del" onclick="delComment(${e.id})">×</button>`:''}
+      <div class="pi-comment-av" style="background:${avBg};color:${avColor}">${c.user==='f'?'她':'他'}</div>
+      <div class="pi-comment-bubble">${escHtml(c.text)}
+        ${canDel?`<button class="pi-comment-del" onclick="delComment(${e.id},${i})">×</button>`:''}
       </div>
     </div>`;
   });
-  // 输入框
-  if(canAdd){
-    html+=`<div class="pi-comment-input-row">
-      <input class="pi-comment-input" id="cmt-${e.id}" placeholder="说点什么…" maxlength="80"
-        onkeydown="if(event.key==='Enter')submitComment(${e.id})">
-      <button class="pi-comment-send pi-comment-send-${S.user}" onclick="submitComment(${e.id})">发送</button>
-    </div>`;
-  }
+  html+=`<div class="pi-comment-input-row">
+    <input class="pi-comment-input" id="cmt-${e.id}" placeholder="说点什么…" maxlength="80"
+      onkeydown="if(event.key==='Enter')submitComment(${e.id})">
+    <button class="pi-comment-send pi-comment-send-${S.user}" onclick="submitComment(${e.id})">发送</button>
+  </div>`;
   html+='</div>';
   return html;
 }
@@ -1031,18 +1017,18 @@ async function submitComment(evId){
   if(!day) return;
   const ev=day.events.find(e=>e.id===evId);
   if(!ev) return;
-  if(!ev.comments) ev.comments={};
-  ev.comments[S.user]={text, time: Date.now()};
+  if(!Array.isArray(ev.comments)) ev.comments=[];
+  ev.comments.push({user:S.user, text, time:Date.now()});
   await saveDay(S.calSel);
   renderPreview(S.calSel);
   showToast('评论已发送 ♡',true);
 }
-async function delComment(evId){
+async function delComment(evId,idx){
   const day=S.data[S.calSel];
   if(!day) return;
   const ev=day.events.find(e=>e.id===evId);
-  if(!ev||!ev.comments) return;
-  delete ev.comments[S.user];
+  if(!ev||!Array.isArray(ev.comments)) return;
+  ev.comments.splice(idx,1);
   await saveDay(S.calSel);
   renderPreview(S.calSel);
   showToast('已删除评论',true);
