@@ -188,6 +188,19 @@ textarea.fi{resize:none}
 .pi-photo{width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer}
 .preview-empty{font-size:14px;color:#ccc;text-align:center;padding:1.5rem 0}
 
+/* 评论区 */
+.pi-comment-wrap{margin-top:8px;border-top:1px solid rgba(0,0,0,.06);padding-top:8px}
+.pi-comment-existing{display:flex;align-items:flex-start;gap:7px;margin-bottom:6px}
+.pi-comment-av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;margin-top:1px}
+.pi-comment-bubble{background:rgba(0,0,0,.05);border-radius:0 8px 8px 8px;padding:5px 9px;font-size:12px;color:#444;line-height:1.5;flex:1;position:relative}
+.pi-comment-del{position:absolute;right:5px;top:4px;background:none;border:none;cursor:pointer;font-size:12px;color:#bbb;padding:0;line-height:1}
+.pi-comment-del:active{color:#c0392b}
+.pi-comment-input-row{display:flex;gap:6px;align-items:center}
+.pi-comment-input{flex:1;border:1px solid rgba(0,0,0,.1);border-radius:16px;padding:5px 12px;font-size:12px;color:#1a1a1a;background:rgba(255,255,255,.7);outline:none;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}
+.pi-comment-input:focus{border-color:rgba(0,0,0,.2)}
+.pi-comment-send{padding:5px 12px;border-radius:16px;border:none;font-size:12px;font-weight:600;cursor:pointer;color:#fff;flex-shrink:0}
+.pi-comment-send-f{background:#D4537E}.pi-comment-send-m{background:#378ADD}
+
 /* REVIEW / MILESTONES */
 .review-top{background:#fff;padding:16px 18px 12px;border-bottom:1px solid #ede9e0;margin-bottom:1px}
 .review-top-title{font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:4px}
@@ -939,22 +952,24 @@ async function renderPreview(ds){
   const day=S.data[ds],evs=day?day.events:[];
   const pl=document.getElementById('previewList');
   if(!evs.length){pl.innerHTML='<div class="preview-empty">这天还没有日程记录</div>';return;}
-  // 先渲染骨架
   pl.innerHTML='<div class="preview-list">'+evs.map(e=>{
     const isBoth=e.user==='both',isF=e.user==='f';
     const hasP=e.photoIds&&e.photoIds.length>0;
-    return `<div class="preview-item ${isBoth?'pi-both':isF?'pi-f':'pi-m'}">
+    // 评论权限：对方的日程或共同日程都可以评论，但每人只能有一条
+    const canComment=canAddComment(e);
+    const commentHtml=renderCommentBlock(e);
+    return `<div class="preview-item ${isBoth?'pi-both':isF?'pi-f':'pi-m'}" id="pi-${e.id}">
       <div class="pi-bar ${isBoth?'pi-bar-both':isF?'pi-bar-f':'pi-bar-m'}"></div>
       <div class="pi-body">
         <div class="pi-time">${e.ts} · ${isBoth?'两人同行':NAMES[e.user]} · ${e.cat}</div>
         <div class="pi-title">${e.title}</div>
         ${e.note?`<div class="pi-note">${e.note}</div>`:''}
         ${hasP?`<div class="pi-photos" id="pip-${e.id}"><span style="font-size:11px;color:#ccc">加载照片…</span></div>`:''}
+        ${commentHtml}
       </div>
     </div>`;
   }).join('')+'</div>';
   if(day&&day.note) pl.innerHTML+=`<div class="note-view" style="margin-top:10px"><div class="note-view-label">今日小结</div><div class="note-view-text">${day.note}</div></div>`;
-  // 填充照片（直接用 Cloudinary URL）
   evs.forEach(e=>{
     if(!e.photoIds||!e.photoIds.length)return;
     const el=document.getElementById('pip-'+e.id);
@@ -966,6 +981,73 @@ async function renderPreview(ds){
     ).join('');
   });
 }
+// ── 评论 ──
+// comments 结构: {f: {text, time}, m: {text, time}} 存在 event 上
+function canAddComment(e){
+  // 对方的日程、或共同完成的日程，且当前用户还没有评论
+  if(e.user===S.user) return false; // 自己的日程不能评论
+  if(e.comments&&e.comments[S.user]) return false; // 已经评论过了
+  return true;
+}
+function renderCommentBlock(e){
+  const comments=e.comments||{};
+  const hasAny=comments.f||comments.m;
+  const canAdd=canAddComment(e);
+  if(!hasAny&&!canAdd) return '';
+  let html='<div class="pi-comment-wrap">';
+  // 已有评论
+  ['f','m'].forEach(u=>{
+    if(!comments[u]) return;
+    const avBg=u==='f'?'#F4C0D1':'#B5D4F4';
+    const avColor=u==='f'?'#72243E':'#0C447C';
+    const canDel=u===S.user;
+    html+=`<div class="pi-comment-existing">
+      <div class="pi-comment-av" style="background:${avBg};color:${avColor}">${u==='f'?'她':'他'}</div>
+      <div class="pi-comment-bubble">${escHtml(comments[u].text)}
+        ${canDel?`<button class="pi-comment-del" onclick="delComment(${e.id})">×</button>`:''}
+      </div>
+    </div>`;
+  });
+  // 输入框
+  if(canAdd){
+    html+=`<div class="pi-comment-input-row">
+      <input class="pi-comment-input" id="cmt-${e.id}" placeholder="说点什么…" maxlength="80"
+        onkeydown="if(event.key==='Enter')submitComment(${e.id})">
+      <button class="pi-comment-send pi-comment-send-${S.user}" onclick="submitComment(${e.id})">发送</button>
+    </div>`;
+  }
+  html+='</div>';
+  return html;
+}
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+async function submitComment(evId){
+  const input=document.getElementById('cmt-'+evId);
+  if(!input) return;
+  const text=input.value.trim();
+  if(!text){showToast('请输入评论内容',false);return;}
+  const day=S.data[S.calSel];
+  if(!day) return;
+  const ev=day.events.find(e=>e.id===evId);
+  if(!ev) return;
+  if(!ev.comments) ev.comments={};
+  ev.comments[S.user]={text, time: Date.now()};
+  await saveDay(S.calSel);
+  renderPreview(S.calSel);
+  showToast('评论已发送 ♡',true);
+}
+async function delComment(evId){
+  const day=S.data[S.calSel];
+  if(!day) return;
+  const ev=day.events.find(e=>e.id===evId);
+  if(!ev||!ev.comments) return;
+  delete ev.comments[S.user];
+  await saveDay(S.calSel);
+  renderPreview(S.calSel);
+  showToast('已删除评论',true);
+}
+
 function goToDay(){S.curDate=S.calSel;showPage('today');}
 
 // ── 重要日子 ──
