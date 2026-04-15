@@ -955,8 +955,6 @@ async function renderPreview(ds){
   pl.innerHTML='<div class="preview-list">'+evs.map(e=>{
     const isBoth=e.user==='both',isF=e.user==='f';
     const hasP=e.photoIds&&e.photoIds.length>0;
-    // 评论权限：对方的日程或共同日程都可以评论，但每人只能有一条
-    const canComment=canAddComment(e);
     const commentHtml=renderCommentBlock(e);
     return `<div class="preview-item ${isBoth?'pi-both':isF?'pi-f':'pi-m'}" id="pi-${e.id}">
       <div class="pi-bar ${isBoth?'pi-bar-both':isF?'pi-bar-f':'pi-bar-m'}"></div>
